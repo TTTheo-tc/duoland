@@ -1,0 +1,215 @@
+{
+  "id": "emotion-detective",
+  "slug": "emotion-detective",
+  "version": "1.0.0",
+  "status": "draft",
+  "title": "情绪侦探",
+  "subtitle": "找回消失的心情颜色",
+  "description": "通过故事和选择练习识别情绪，并学习合适的表达方式。",
+  "domain": "mental_health_education",
+  "ageBand": "8-10",
+  "estimatedMinutes": 12,
+  "learningObjectives": [
+    "识别常见情绪",
+    "理解情绪和行为的关系",
+    "学习在困难情境中寻求帮助"
+  ],
+  "safety": {
+    "dataSensitivity": "low",
+    "allowsFreeTextInput": false,
+    "requiresGuardianConsent": false,
+    "crisisHandlingRequired": false
+  },
+  "guardianSummary": {
+    "title": "孩子将练习识别和表达情绪",
+    "description": "本任务通过游戏化故事帮助孩子认识生气、难过、担心等常见情绪。",
+    "whatChildWillPractice": [
+      "选择合适的情绪卡片",
+      "比较不同应对方式的结果",
+      "学习向可信赖的大人求助"
+    ],
+    "whatDataIsCollected": [
+      "任务完成进度",
+      "结构化选择结果",
+      "活动完成时间"
+    ],
+    "familyExtensionTips": [
+      "和孩子一起说出今天经历过的一种情绪。",
+      "鼓励孩子用“我感觉……因为……”表达感受。"
+    ]
+  },
+  "teacherGuide": {
+    "objective": "帮助学生识别常见情绪，并理解不同应对方式带来的结果。",
+    "suggestedDurationMinutes": 15,
+    "discussionPrompts": [
+      "当你生气时，身体会有什么感觉？",
+      "遇到误会时，可以先做什么？",
+      "什么情况下应该找老师或家长帮忙？"
+    ],
+    "classroomTips": [
+      "不要要求学生公开分享私人经历。",
+      "鼓励学生讨论故事中的角色，而不是评价同学本人。"
+    ],
+    "riskNotes": [
+      "如果学生主动表达严重痛苦或安全风险，应交由学校既有安全流程、监护人或专业人员处理。"
+    ]
+  },
+  "stages": [
+    {
+      "id": "intro",
+      "title": "故事开始",
+      "type": "story",
+      "activityId": "dialogue_intro",
+      "next": "choose_emotion"
+    },
+    {
+      "id": "choose_emotion",
+      "title": "他现在是什么心情？",
+      "type": "activity",
+      "activityId": "emotion_choice_001",
+      "next": "scenario_choice"
+    },
+    {
+      "id": "scenario_choice",
+      "title": "我可以怎么做？",
+      "type": "activity",
+      "activityId": "scenario_choice_001",
+      "next": "breathing"
+    },
+    {
+      "id": "breathing",
+      "title": "停一下，深呼吸",
+      "type": "activity",
+      "activityId": "breathing_001",
+      "next": "recap"
+    },
+    {
+      "id": "recap",
+      "title": "任务总结",
+      "type": "recap",
+      "activityId": "recap_001",
+      "next": "complete"
+    },
+    {
+      "id": "complete",
+      "title": "完成任务",
+      "type": "complete"
+    }
+  ],
+  "activities": [
+    {
+      "id": "dialogue_intro",
+      "kind": "dialogue",
+      "title": "故事开始",
+      "completion": { "type": "auto" },
+      "safety": { "allowsFreeTextInput": false },
+      "config": {
+        "advanceMode": "click",
+        "lines": [
+          {
+            "speakerId": "guide",
+            "speakerName": "心情小侦探",
+            "text": "欢迎来到心情颜色小镇。今天，有一个小朋友的心情颜色不见了。"
+          },
+          {
+            "speakerId": "child_npc",
+            "speakerName": "小宇",
+            "text": "同学说我画得不好，我现在不想和任何人说话。"
+          },
+          {
+            "speakerId": "guide",
+            "speakerName": "心情小侦探",
+            "text": "我们先观察他的心情，再一起想一个不会伤害自己和别人的办法。"
+          }
+        ]
+      }
+    },
+    {
+      "id": "emotion_choice_001",
+      "kind": "emotion-card",
+      "title": "选择可能的心情",
+      "completion": { "type": "user_submit" },
+      "safety": { "allowsFreeTextInput": false },
+      "config": {
+        "prompt": "你觉得小宇现在可能是什么心情？可以选一个或多个。",
+        "emotions": [
+          { "id": "angry", "label": "生气", "emoji": "😠" },
+          { "id": "sad", "label": "难过", "emoji": "😢" },
+          { "id": "happy", "label": "开心", "emoji": "😊" },
+          { "id": "worried", "label": "担心", "emoji": "😟" }
+        ],
+        "correctEmotionIds": ["angry", "sad"],
+        "feedbackByEmotionId": {
+          "angry": "是的，被别人否定时，有些人会感到生气。",
+          "sad": "是的，被别人否定时，也可能会感到难过。",
+          "happy": "开心通常会让人想靠近别人。小宇现在更像是不舒服的心情。",
+          "worried": "担心也有可能出现。我们还可以继续观察。"
+        }
+      }
+    },
+    {
+      "id": "scenario_choice_001",
+      "kind": "scenario-choice",
+      "title": "选择一种应对方式",
+      "completion": { "type": "user_submit" },
+      "safety": { "allowsFreeTextInput": false },
+      "config": {
+        "scenarioText": "如果你是小宇，你可以怎么做？",
+        "choices": [
+          {
+            "id": "push_classmate",
+            "label": "推开同学，让他别说了",
+            "outcomeText": "这样可能会让冲突变得更严重。生气时可以先停一下。",
+            "learningSignal": 0
+          },
+          {
+            "id": "say_feeling",
+            "label": "说：你这样说让我很难过",
+            "outcomeText": "这是更清楚表达感受的方式，也更容易让别人理解你。",
+            "recommended": true,
+            "learningSignal": 1
+          },
+          {
+            "id": "ask_teacher",
+            "label": "找老师帮忙说清楚",
+            "outcomeText": "当自己不知道怎么处理时，找可信赖的大人帮忙是好办法。",
+            "recommended": true,
+            "learningSignal": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "breathing_001",
+      "kind": "breathing",
+      "title": "深呼吸练习",
+      "completion": { "type": "time_elapsed", "minSeconds": 8 },
+      "safety": { "allowsFreeTextInput": false },
+      "config": {
+        "instruction": "跟着圆圈一起呼吸：吸气，停一下，慢慢呼气。",
+        "inhaleSeconds": 3,
+        "holdSeconds": 1,
+        "exhaleSeconds": 3,
+        "cycles": 2
+      }
+    },
+    {
+      "id": "recap_001",
+      "kind": "recap",
+      "title": "今天学到了什么？",
+      "completion": { "type": "user_submit" },
+      "safety": { "allowsFreeTextInput": false },
+      "config": {
+        "title": "情绪侦探任务完成",
+        "summaryPoints": [
+          "情绪没有对错，行为需要选择。",
+          "生气或难过时，可以先停一下。",
+          "可以用语言表达感受，也可以找可信赖的大人帮忙。"
+        ],
+        "childTakeaway": "下次遇到难受的事情时，我可以先说出自己的感受。",
+        "guardianTip": "家长可以在日常生活中示范“我感觉……因为……”的表达方式。"
+      }
+    }
+  ],
+  "assets": []
+}

@@ -1,0 +1,25 @@
+{
+  "name": "@sel-quest/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1 --port 3000",
+    "build": "next build",
+    "lint": "eslint . --max-warnings=0"
+  },
+  "dependencies": {
+    "@sel-quest/activities": "0.1.0",
+    "@sel-quest/content": "0.1.0",
+    "@sel-quest/game-runtime": "0.1.0",
+    "@sel-quest/persistence": "0.1.0",
+    "@sel-quest/quest-core": "0.1.0",
+    "@sel-quest/safety": "0.1.0",
+    "next": "^15.3.3",
+    "phaser": "^3.90.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "xstate": "^5.19.4",
+    "zod": "^3.25.42"
+  },
+  "devDependencies": {}
+}

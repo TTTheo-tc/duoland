@@ -1,0 +1,16 @@
+{
+  "name": "@sel-quest/quest-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "xstate": "^5.19.4",
+    "zod": "^3.25.42"
+  },
+  "devDependencies": {}
+}

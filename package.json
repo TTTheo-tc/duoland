@@ -1,0 +1,26 @@
+{
+  "name": "sel-quest-platform",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm --workspace @sel-quest/web run dev",
+    "build": "npm --workspace @sel-quest/web run build",
+    "lint": "npm --workspace @sel-quest/web run lint",
+    "test": "npm --workspaces --if-present run test",
+    "test:smoke": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^22.15.29",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.5",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^15.5.18",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.4"
+  }
+}
