@@ -96,16 +96,21 @@ p {
 }
 
 .primary-button,
-.secondary-button {
+.secondary-button,
+.disabled-pill {
   align-items: center;
   border: 2px solid var(--ink);
   border-radius: 8px;
-  cursor: pointer;
   display: inline-flex;
   font-weight: 700;
   justify-content: center;
   min-height: 44px;
   padding: 10px 18px;
+}
+
+.primary-button,
+.secondary-button {
+  cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -118,6 +123,11 @@ p {
 .secondary-button {
   background: #fff;
   color: var(--ink);
+}
+
+.disabled-pill {
+  background: var(--line);
+  color: var(--muted);
 }
 
 .primary-button:hover,
@@ -187,6 +197,15 @@ p {
 }
 
 .quest-card {
+  padding: 24px;
+}
+
+.empty-state {
+  border: 2px dashed var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  margin: 0 auto;
+  max-width: 980px;
   padding: 24px;
 }
 

@@ -144,7 +144,7 @@ export function EmotionCardActivity({
             completed: true,
             learningSignal: estimateEmotionSignal(
               selectedEmotionIds,
-              activity.config.correctEmotionIds
+              activity.config.acceptableEmotionIds ?? activity.config.correctEmotionIds
             ),
             value: { selectedEmotionIds }
           })

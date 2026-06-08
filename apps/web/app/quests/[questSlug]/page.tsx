@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { getQuestBySlug } from '@sel-quest/content'
+import { getPublishableQuestBySlug } from '@sel-quest/content'
 import { QuestPlayer } from '../../../src/features/quest-player/QuestPlayer'
 
 export default async function QuestPage({
@@ -8,7 +8,7 @@ export default async function QuestPage({
   params: Promise<{ questSlug: string }>
 }) {
   const { questSlug } = await params
-  const quest = getQuestBySlug(questSlug)
+  const quest = getPublishableQuestBySlug(questSlug)
 
   if (!quest) notFound()
 

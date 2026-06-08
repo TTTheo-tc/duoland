@@ -1,9 +1,9 @@
 import { z } from 'zod'
-import type { QuestDefinition } from './types'
+import type { QuestDefinition } from './types.ts'
 import {
   QuestValidationError,
   validateQuestSemantics
-} from './validators'
+} from './validators.ts'
 
 export const QuestStatusSchema = z.enum(['draft', 'published', 'archived'])
 export const AgeBandSchema = z.enum(['6-8', '8-10', '10-12', '12-15'])

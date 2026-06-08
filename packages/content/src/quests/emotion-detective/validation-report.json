@@ -1,0 +1,26 @@
+{
+  "id": "report_emotion-detective_1.0.0_rules",
+  "contentItemId": "emotion-detective",
+  "contentVersion": "1.0.0",
+  "contentHash": "sha256_1dff5b84a461a12970eb913f4fc68c47e827f5ee6b19a2e4731fab5544e5dac8",
+  "status": "passed",
+  "validators": [
+    {
+      "id": "run_emotion-detective_1.0.0_rules",
+      "validatorId": "rule.sel_content_baseline",
+      "validatorType": "rule",
+      "status": "passed",
+      "startedAt": "2026-06-09T00:00:00.000Z",
+      "completedAt": "2026-06-09T00:00:00.000Z",
+      "summary": "Rule-based SEL content validation passed."
+    }
+  ],
+  "issues": [],
+  "summary": {
+    "overallRisk": "low",
+    "pedagogicalQuality": "good",
+    "ageAppropriateness": "appropriate",
+    "safetyDecision": "allow"
+  },
+  "createdAt": "2026-06-09T00:00:00.000Z"
+}

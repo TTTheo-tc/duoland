@@ -138,7 +138,7 @@
           { "id": "happy", "label": "开心", "emoji": "😊" },
           { "id": "worried", "label": "担心", "emoji": "😟" }
         ],
-        "correctEmotionIds": ["angry", "sad"],
+        "acceptableEmotionIds": ["angry", "sad", "worried"],
         "feedbackByEmotionId": {
           "angry": "是的，被别人否定时，有些人会感到生气。",
           "sad": "是的，被别人否定时，也可能会感到难过。",

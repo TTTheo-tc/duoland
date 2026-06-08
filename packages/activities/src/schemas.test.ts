@@ -29,7 +29,7 @@ describe('activity config schemas', () => {
     expect(EmotionCardActivityConfigSchema.safeParse({
       prompt: 'What emotion?',
       emotions: [{ id: 'sad', label: 'Sad' }],
-      correctEmotionIds: ['sad']
+      acceptableEmotionIds: ['sad']
     }).success).toBe(true)
 
     expect(ScenarioChoiceActivityConfigSchema.safeParse({

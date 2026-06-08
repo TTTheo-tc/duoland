@@ -1,8 +1,8 @@
 import Link from 'next/link'
-import { listQuests } from '@sel-quest/content'
+import { listPublishableQuests } from '@sel-quest/content'
 
 export default function HomePage() {
-  const [quest] = listQuests()
+  const [quest] = listPublishableQuests()
 
   return (
     <main className="home-shell">
@@ -14,9 +14,13 @@ export default function HomePage() {
             一个用于儿童社会情绪学习和家校共育课程的游戏化任务原型。
           </p>
           <div className="hero-actions">
-            <Link className="primary-button" href={`/quests/${quest.slug}`}>
-              开始体验
-            </Link>
+            {quest ? (
+              <Link className="primary-button" href={`/quests/${quest.slug}`}>
+                开始体验
+              </Link>
+            ) : (
+              <span className="disabled-pill">暂无已发布任务</span>
+            )}
             <Link className="secondary-button" href="/quests">
               查看任务
             </Link>

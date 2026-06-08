@@ -285,6 +285,13 @@ AI Runtime Layer
   simulator first
   rule-based feedback
   future LLM/RAG adapter
+
+Authoring Pipeline
+  content-authoring ports
+  content-validation reports
+  review-core issue taxonomy
+  content-refinement ports
+  publishing gate
 ```
 
 ### 4.2 数据流
@@ -327,6 +334,160 @@ flowchart TD
   H --> M[Safety Layer]
   H --> N[AI Runtime Simulator]
 ```
+
+### 4.4 内容生产与发布流水线
+
+受 QUEST-AI 的 `generate -> verify -> refine -> human review` 流程启发，儿童心理健康教育内容 MUST 区分运行时和生产侧。
+
+```text
+Expert-authored example / learning brief
+  ↓
+AI candidate generation
+  ↓
+Rule-based validation
+  ↓
+LLM ensemble validation
+  ↓
+AI-assisted refinement
+  ↓
+Expert review
+  ↓
+Publishing gate
+  ↓
+Quest Runtime
+```
+
+约束：
+
+```text
+AI MUST NOT directly publish child-facing content.
+LLM validators are screening aids, not final authority.
+Human expert approval is required before production publishing.
+Published quests must have a matching validation report and matching expert review.
+Blocking issues prevent publishing.
+Required expert follow-ups prevent publishing.
+Runtime packages must not depend on authoring implementation details.
+```
+
+第一版发布判定 SHOULD 使用以下证据：
+
+```text
+QuestDefinition.status === 'published'
+ContentValidationReport.contentItemId === QuestDefinition.id
+ContentValidationReport.contentVersion === QuestDefinition.version
+ContentValidationReport.contentHash === hash(reviewable QuestDefinition content)
+ContentValidationReport.status === 'passed'
+ContentValidationReport.summary.safetyDecision === 'allow'
+At least one ContentExpertReview decision is 'approved'
+Approved ContentExpertReview.contentHash === hash(reviewable QuestDefinition content)
+No matching ContentExpertReview has required follow-ups
+```
+
+`contentHash` MUST be derived from reviewable child-facing content, not from lifecycle metadata. For example, changing `QuestDefinition.status` from `draft` to `published` MUST NOT change the hash; changing stages, activities, safety copy, guardian summary, or teacher guide MUST change it.
+`contentHash` MUST use a strong canonical JSON hash such as SHA-256. Non-cryptographic or short hashes are not acceptable for binding validation and review evidence to content.
+
+Validation and review evidence SHOULD be persisted beside the content package:
+
+```text
+quest.json
+validation-report.json
+expert-reviews.json
+archived-expert-reviews.json
+```
+
+The runtime content loader MUST load and validate these artifacts. It MUST NOT silently generate fresh validation evidence during child-facing runtime loading, because generated-at-load evidence is not an auditable review record. Rule validators MAY be used by authoring tools or CI to create or refresh `validation-report.json`.
+
+Public child-facing routes MUST use publishable content APIs only. Draft content MAY be available through development-only preview routes, but preview routes MUST NOT be treated as production runtime entry points.
+
+Content evidence audit is separate from publishability:
+
+```text
+auditContentEvidence
+  verifies quest/report/review ids, versions, and hashes are internally consistent
+  flags published content that fails publishability
+  does not fail draft content merely because expert review is still missing
+
+isQuestPublishable
+  requires published status, passed validation report, matching expert approval, no follow-ups, and matching content hash
+```
+
+CI SHOULD run:
+
+```text
+npm run audit:content
+npm run content:check-validation
+```
+
+These commands check persisted content evidence without requiring the full web smoke suite. `content:check-validation` is read-only: it reruns the deterministic validator using the persisted report id and timestamp, fails if `validation-report.json` is out of date, and also fails when the current report contains blocking issues.
+
+Authoring tools SHOULD refresh rule-based validation reports with:
+
+```text
+npm run content:validate
+```
+
+This command reads `quest.json`, validates the quest schema and semantic links, runs the deterministic SEL validator, and rewrites adjacent `validation-report.json` files with matching content hashes. It is an authoring command, not a substitute for expert review. Test and CI fixtures MAY point it at another content root through `CONTENT_QUESTS_ROOT`.
+
+Authoring state SHOULD be inspectable with:
+
+```text
+npm run content:status -- [quest-slug] [--json]
+```
+
+This command reads persisted content evidence and reports the derived authoring state, current content hash, validation status, expert review count, evidence issues, and publishability blockers. It MUST be read-only.
+
+When validation or expert review requests changes, authoring tools SHOULD generate a revision packet:
+
+```text
+npm run content:revision-packet -- <quest-slug> [--out <path>]
+```
+
+This command verifies persisted evidence and emits validation issues, expert required follow-ups, current content hash, and refinement constraints. It MUST NOT edit quest content, approve content, or publish content. After revision, validation evidence MUST be regenerated and expert review MUST be repeated for the new content hash.
+
+After content revision and validation regeneration, stale expert reviews SHOULD be archived with:
+
+```text
+npm run content:archive-stale-reviews -- <quest-slug> [--dry-run]
+```
+
+This command moves same-version expert reviews whose `contentHash` no longer matches the current quest into `archived-expert-reviews.json`, while keeping current-hash reviews in `expert-reviews.json`. It MUST reject mismatched content ids or versions rather than hiding bad evidence.
+
+Expert reviewers SHOULD receive a generated review packet:
+
+```text
+npm run content:review-packet -- <quest-slug> [--out <path>]
+```
+
+This command validates the quest schema, verifies persisted evidence, and emits a packet containing the current content hash, validation summary, issue list, existing review summaries, reviewer checklist, and a `ContentExpertReview` template. The template MUST default to `changes_requested` with required follow-ups so it cannot be copied unchanged to bypass expert approval.
+
+Completed expert reviews SHOULD be recorded through:
+
+```text
+npm run content:record-review -- <quest-slug> <review-json-path>
+```
+
+This command validates the submitted `ContentExpertReview`, rejects stale hashes, duplicate review ids, and unchanged template placeholders, then appends the review to `expert-reviews.json`. Recording a review MUST NOT publish content; publication remains a separate gate.
+
+Publishing SHOULD go through the explicit content gate:
+
+```text
+npm run content:publish -- <quest-slug> [--dry-run]
+```
+
+This command validates the quest schema, verifies persisted validation and expert-review evidence, checks publishability against a `published` candidate, and only then writes `QuestDefinition.status = 'published'`. It MUST fail when expert approval is missing, stale, or has required follow-ups.
+
+Authoring state SHOULD be derived from evidence rather than manually edited:
+
+| State | Meaning |
+|---|---|
+| `drafting` | Quest exists but has no validation report yet. |
+| `auto_validation_failed` | Validation evidence is missing/mismatched, or automated validation is blocked. |
+| `needs_ai_refinement` | Automated validation found minor or major revision work. |
+| `needs_expert_review` | Automated validation passed, but no matching expert review exists. |
+| `expert_changes_requested` | Expert review requested changes or required follow-ups. |
+| `approved` | Validation passed and expert review approved, but quest is not published. |
+| `published` | Validation passed, expert review approved, and quest status is `published`. |
+| `archived` | Quest status is `archived`. |
 
 ---
 
@@ -478,6 +639,10 @@ sel-quest-platform/
 |---|---|---|
 | `quest-core` | Quest schema、semantic validators、状态机、事件、进度快照、接口定义 | React、Next.js、Phaser、DOM、localStorage |
 | `content` | 本地 typed JSON/YAML 内容、内容校验、内容导出 | 业务运行时、UI 组件 |
+| `content-authoring` | AI/人工内容生成端口、候选 Quest provenance | 儿童运行时、UI 组件、直接模型实现 |
+| `content-validation` | SEL 内容质量规则校验、发布前 validation report | React、Next.js、Phaser、DOM |
+| `review-core` | 审核状态、issue taxonomy、validation report、专家审核记录、发布判断 | React、Next.js、Phaser、DOM |
+| `content-refinement` | 根据 validation report 和 reviewer notes 生成修订端口 | 儿童运行时、UI 组件、直接模型实现 |
 | `activities` | Activity schema、React renderer、完成规则 | Next.js router、数据库 |
 | `game-runtime` | Phaser 封装、Scene、Bridge、资源加载 | Quest 内容硬编码、localStorage |
 | `ui` | 通用 UI 组件 | Quest 业务流程、Phaser |

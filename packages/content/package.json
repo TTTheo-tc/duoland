@@ -5,7 +5,22 @@
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
+  "scripts": {
+    "archive-stale-reviews": "node scripts/archive-stale-expert-reviews.mjs",
+    "audit": "vitest run src/evidence-audit.test.ts",
+    "check-validation": "node scripts/check-validation-reports.mjs",
+    "publish": "node scripts/publish-quest.mjs",
+    "record-review": "node scripts/record-expert-review.mjs",
+    "review-packet": "node scripts/write-review-packet.mjs",
+    "revision-packet": "node scripts/write-revision-packet.mjs",
+    "status": "node scripts/show-authoring-status.mjs",
+    "validate": "node scripts/write-validation-reports.mjs",
+    "test": "vitest run"
+  },
   "dependencies": {
+    "@sel-quest/content-authoring": "0.1.0",
+    "@sel-quest/content-validation": "0.1.0",
+    "@sel-quest/review-core": "0.1.0",
     "@sel-quest/quest-core": "0.1.0"
   }
 }

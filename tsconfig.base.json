@@ -9,6 +9,7 @@
     "esModuleInterop": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
@@ -16,9 +17,14 @@
     "paths": {
       "@sel-quest/quest-core": ["packages/quest-core/src/index.ts"],
       "@sel-quest/content": ["packages/content/src/index.ts"],
+      "@sel-quest/content/preview": ["packages/content/src/preview.ts"],
+      "@sel-quest/content-authoring": ["packages/content-authoring/src/index.ts"],
+      "@sel-quest/content-refinement": ["packages/content-refinement/src/index.ts"],
+      "@sel-quest/content-validation": ["packages/content-validation/src/index.ts"],
       "@sel-quest/activities": ["packages/activities/src/index.ts"],
       "@sel-quest/persistence": ["packages/persistence/src/index.ts"],
       "@sel-quest/game-runtime": ["packages/game-runtime/src/index.ts"],
+      "@sel-quest/review-core": ["packages/review-core/src/index.ts"],
       "@sel-quest/safety": ["packages/safety/src/index.ts"],
       "@sel-quest/ai-runtime": ["packages/ai-runtime/src/index.ts"]
     }

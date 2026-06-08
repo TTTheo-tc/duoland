@@ -35,6 +35,7 @@ export const EmotionCardActivityConfigSchema = z.object({
       description: z.string().optional()
     })
   ).min(1),
+  acceptableEmotionIds: z.array(z.string().min(1)).optional(),
   correctEmotionIds: z.array(z.string().min(1)).optional(),
   feedbackByEmotionId: z.record(z.string()).optional()
 })

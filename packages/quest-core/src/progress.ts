@@ -1,4 +1,4 @@
-import type { QuestContext, QuestProgressSnapshot } from './types'
+import type { QuestContext, QuestProgressSnapshot } from './types.ts'
 
 export function createProgressSnapshot(
   context: QuestContext,

@@ -1,7 +1,13 @@
 import { expect, test, type Page } from '@playwright/test'
 
-const questPath = '/quests/emotion-detective'
+const questPath = '/preview/quests/emotion-detective'
 const progressKey = 'quest_progress:anonymous:emotion-detective:1.0.0'
+
+test('does not expose draft quests on the public runtime route', async ({ page }) => {
+  const response = await page.goto('/quests/emotion-detective')
+
+  expect(response?.status()).toBe(404)
+})
 
 test('runs the emotion detective quest to completion', async ({ page }) => {
   await openFreshQuest(page)

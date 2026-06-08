@@ -9,7 +9,7 @@ import type {
   QuestEvent,
   QuestProgressSnapshot,
   QuestStageDefinition
-} from './types'
+} from './types.ts'
 
 export function createQuestMachine(input: CreateQuestMachineInput) {
   const now = input.now ?? (() => new Date().toISOString())

@@ -1,4 +1,4 @@
-import type { QuestDefinition } from './types'
+import type { QuestDefinition } from './types.ts'
 
 export interface QuestValidationIssue {
   path: string
@@ -8,8 +8,11 @@ export interface QuestValidationIssue {
 }
 
 export class QuestValidationError extends Error {
-  constructor(public issues: QuestValidationIssue[]) {
+  issues: QuestValidationIssue[]
+
+  constructor(issues: QuestValidationIssue[]) {
     super('Quest semantic validation failed')
+    this.issues = issues
   }
 }
 
