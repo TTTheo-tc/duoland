@@ -2,7 +2,7 @@
   "id": "report_emotion-detective_1.0.0_rules",
   "contentItemId": "emotion-detective",
   "contentVersion": "1.0.0",
-  "contentHash": "sha256_46683633fd7cca3b1a516bde6efb35e47f79c65f1df6a5f9b15039ede461882f",
+  "contentHash": "sha256_541db570c7c0475527fe3c9c242b36826101fa4f2569b58d594b6df509522f99",
   "status": "passed",
   "validators": [
     {

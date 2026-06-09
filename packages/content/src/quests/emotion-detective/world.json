@@ -1,0 +1,91 @@
+{
+  "id": "emotion-town",
+  "version": "0.1.0",
+  "title": "心情颜色小镇",
+  "description": "一个用于情绪识别和安全表达练习的轻量世界原型。",
+  "artDirection": {
+    "style": "storybook_3d",
+    "mood": ["warm", "safe", "curious"]
+  },
+  "zones": [
+    {
+      "id": "emotion_harbor",
+      "title": "情绪港湾",
+      "theme": "emotion_harbor",
+      "sceneIds": ["art_room"]
+    }
+  ],
+  "scenes": [
+    {
+      "id": "art_room",
+      "zoneId": "emotion_harbor",
+      "title": "画室门口",
+      "cameraStart": {
+        "position": [0, 2, 6],
+        "target": [0, 1, 0],
+        "fov": 45
+      },
+      "characterPlacements": [
+        {
+          "characterId": "xiaoyu",
+          "position": [0, 0, 0],
+          "initialAnimation": "sad_idle"
+        }
+      ],
+      "interactableIds": ["xiaoyu_npc", "crumpled_drawing"],
+      "lightingPreset": "soft_day"
+    }
+  ],
+  "characters": [
+    {
+      "id": "xiaoyu",
+      "name": "小宇",
+      "role": "child_peer",
+      "personalityTags": ["quiet", "creative"],
+      "asset": {
+        "modelAssetId": "model_xiaoyu_placeholder",
+        "animationSetId": "anim_child_peer_basic"
+      },
+      "safetyProfile": {
+        "neverActsAsTherapist": true,
+        "canDiscussSensitiveTopics": false
+      },
+      "dialogueStyle": {
+        "ageBand": "8-10",
+        "tone": "warm",
+        "maxSentenceLength": "short"
+      }
+    }
+  ],
+  "interactables": [
+    {
+      "id": "xiaoyu_npc",
+      "sceneId": "art_room",
+      "type": "npc",
+      "label": "小宇",
+      "position": [0, 0, 0],
+      "radius": 1.2,
+      "onInteract": [
+        {
+          "type": "start_activity",
+          "activityId": "dialogue_intro"
+        }
+      ]
+    },
+    {
+      "id": "crumpled_drawing",
+      "sceneId": "art_room",
+      "type": "emotion_clue",
+      "label": "被揉皱的画纸",
+      "position": [-1, 0, 0.5],
+      "radius": 0.8,
+      "onInteract": [
+        {
+          "type": "set_world_flag",
+          "flag": "observed_crumpled_drawing",
+          "value": true
+        }
+      ]
+    }
+  ]
+}

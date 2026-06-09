@@ -24,6 +24,7 @@
       "@sel-quest/activities": ["packages/activities/src/index.ts"],
       "@sel-quest/persistence": ["packages/persistence/src/index.ts"],
       "@sel-quest/game-runtime": ["packages/game-runtime/src/index.ts"],
+      "@sel-quest/world-core": ["packages/world-core/src/index.ts"],
       "@sel-quest/review-core": ["packages/review-core/src/index.ts"],
       "@sel-quest/safety": ["packages/safety/src/index.ts"],
       "@sel-quest/ai-runtime": ["packages/ai-runtime/src/index.ts"]

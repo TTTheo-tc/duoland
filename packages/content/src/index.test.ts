@@ -8,10 +8,15 @@ import {
   getQuestExpertReviews,
   getQuestPublishabilityReasons,
   getQuestValidationReport,
+  getQuestWorldBySlug,
   isQuestPublishable,
   listPublishableQuests
 } from './index'
-import { listPreviewQuests } from './preview'
+import { getPreviewQuestBySlug, listPreviewQuests } from './preview'
+import {
+  assertWorldActivityReferences,
+  getQuestEntryBySlug
+} from './registry'
 
 describe('content package publishability gates', () => {
   it('keeps local draft quests available for preview', () => {
@@ -26,6 +31,58 @@ describe('content package publishability gates', () => {
     expect(report?.id).toBe('report_emotion-detective_1.0.0_rules')
     expect(report?.status).toBe('passed')
     expect(report?.summary.safetyDecision).toBe('allow')
+  })
+
+  it('loads the world definition bound to the local quest', () => {
+    const world = getQuestWorldBySlug('emotion-detective')
+    const quest = getPreviewQuestBySlug('emotion-detective')
+    const activityIds = new Set(
+      quest?.activities.map((activity) => activity.id) ?? []
+    )
+
+    expect(world?.id).toBe('emotion-town')
+    expect(world?.scenes.map((scene) => scene.id)).toContain('art_room')
+    expect(world?.interactables.map((interactable) => interactable.id)).toEqual([
+      'xiaoyu_npc',
+      'crumpled_drawing'
+    ])
+    const worldActivityIds =
+      world?.interactables.flatMap((interactable) =>
+        interactable.onInteract
+          .filter((action) => action.type === 'start_activity')
+          .map((action) => action.activityId)
+      ) ?? []
+
+    expect(worldActivityIds).toEqual(['dialogue_intro'])
+    expect(
+      worldActivityIds.every((activityId) => activityIds.has(activityId))
+    ).toBe(true)
+  })
+
+  it('rejects world actions that reference unknown quest activities', () => {
+    const entry = getQuestEntryBySlug('emotion-detective')
+    if (!entry?.world) throw new Error('Expected local quest world fixture.')
+
+    expect(() =>
+      assertWorldActivityReferences({
+        ...entry,
+        world: {
+          ...entry.world,
+          interactables: [
+            {
+              ...entry.world.interactables[0],
+              onInteract: [
+                {
+                  type: 'start_activity',
+                  activityId: 'missing_activity'
+                }
+              ]
+            },
+            ...entry.world.interactables.slice(1)
+          ]
+        }
+      })
+    ).toThrow(/missing_activity/)
   })
 
   it('tracks expert reviews separately from automated validation', () => {

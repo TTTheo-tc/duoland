@@ -7,6 +7,13 @@ import {
 
 export const QuestStatusSchema = z.enum(['draft', 'published', 'archived'])
 export const AgeBandSchema = z.enum(['6-8', '8-10', '10-12', '12-15'])
+export const PreferredWorldRendererSchema = z.enum(['react', 'phaser', 'r3f'])
+
+export const QuestWorldBindingSchema = z.object({
+  worldId: z.string().min(1),
+  entrySceneId: z.string().min(1),
+  preferredRenderer: PreferredWorldRendererSchema.optional()
+})
 
 export const SelCompetencySchema = z.enum([
   'self_awareness',
@@ -161,6 +168,7 @@ export const QuestDefinitionSchema = z.object({
   ageBand: AgeBandSchema,
   estimatedMinutes: z.number().int().positive(),
   learningObjectives: z.array(LearningObjectiveSchema).min(1),
+  worldBinding: QuestWorldBindingSchema.optional(),
   safety: QuestSafetySchema,
   guardianSummary: z.object({
     title: z.string().min(1),

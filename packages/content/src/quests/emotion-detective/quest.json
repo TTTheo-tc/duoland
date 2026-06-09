@@ -9,6 +9,11 @@
   "domain": "mental_health_education",
   "ageBand": "8-10",
   "estimatedMinutes": 12,
+  "worldBinding": {
+    "worldId": "emotion-town",
+    "entrySceneId": "art_room",
+    "preferredRenderer": "phaser"
+  },
   "learningObjectives": [
     {
       "id": "lo_emotion_recognition",
