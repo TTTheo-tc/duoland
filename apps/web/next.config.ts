@@ -9,8 +9,7 @@ const nextConfig: NextConfig = {
     '@sel-quest/game-runtime',
     '@sel-quest/renderer-phaser',
     '@sel-quest/renderer-r3f',
-    '@sel-quest/safety',
-    '@sel-quest/ai-runtime'
+    '@sel-quest/safety'
   ]
 }
 
