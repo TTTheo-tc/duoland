@@ -37,12 +37,10 @@ state types:
 - `WorldRuntimeState`
 - `WorldAction`
 
-It also defines renderer/runtime event TypeScript contracts:
+It also defines and schema-validates renderer/runtime event contracts:
 
 - `WorldRuntimeToRendererEvent`
 - `WorldRendererToRuntimeEvent`
-
-Those event contracts are typed, but they are not yet schema-validated.
 
 The current content fixture includes one small world:
 
