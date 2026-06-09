@@ -24,6 +24,8 @@
     "content:validate": "npm --workspace @sel-quest/content run validate --",
     "test": "npm --workspaces --if-present run test",
     "test:smoke": "playwright test",
+    "test:smoke:all": "npm run test:smoke && npm run test:smoke:studio",
+    "test:smoke:studio": "playwright test -c playwright.studio.config.ts",
     "validate:assets": "npm --workspace @sel-quest/asset-pipeline run validate",
     "validate:boundaries": "node scripts/validate-boundaries.mjs",
     "validate:validators": "npm --workspace @sel-quest/validator-evaluation run evaluate"
