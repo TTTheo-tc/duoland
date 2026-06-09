@@ -183,6 +183,7 @@ export interface QuestDefinition {
   estimatedMinutes: number
   learningObjectives: LearningObjective[]
   worldBinding?: QuestWorldBinding
+  episodeIds?: string[]
   safety: QuestSafetyDefinition
   guardianSummary: GuardianSummary
   teacherGuide?: TeacherGuide

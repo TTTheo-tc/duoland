@@ -169,6 +169,7 @@ export const QuestDefinitionSchema = z.object({
   estimatedMinutes: z.number().int().positive(),
   learningObjectives: z.array(LearningObjectiveSchema).min(1),
   worldBinding: QuestWorldBindingSchema.optional(),
+  episodeIds: z.array(z.string().min(1)).optional(),
   safety: QuestSafetySchema,
   guardianSummary: z.object({
     title: z.string().min(1),

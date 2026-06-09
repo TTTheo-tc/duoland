@@ -6,6 +6,7 @@ import {
   getQuestAuthoringSnapshot,
   getQuestArchivedExpertReviews,
   getQuestExpertReviews,
+  getQuestNarrativeBySlug,
   getQuestPublishabilityReasons,
   getQuestValidationReport,
   getQuestWorldBySlug,
@@ -83,6 +84,25 @@ describe('content package publishability gates', () => {
         }
       })
     ).toThrow(/missing_activity/)
+  })
+
+  it('loads the narrative definition bound to the local quest', () => {
+    const narrative = getQuestNarrativeBySlug('emotion-detective')
+    const quest = getPreviewQuestBySlug('emotion-detective')
+
+    expect(narrative?.id).toBe('emotion-detective-narrative')
+    expect(narrative?.episodes.map((episode) => episode.id)).toEqual(
+      quest?.episodeIds
+    )
+    expect(narrative?.episodes[0].beats.map((beat) => beat.id)).toEqual([
+      'beat_opening_cutscene',
+      'beat_opening_dialogue',
+      'beat_observe_drawing',
+      'beat_emotion_choice',
+      'beat_scenario_choice',
+      'beat_breathing',
+      'beat_recap'
+    ])
   })
 
   it('tracks expert reviews separately from automated validation', () => {
