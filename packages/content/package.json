@@ -18,6 +18,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@sel-quest/asset-pipeline": "0.1.0",
     "@sel-quest/content-authoring": "0.1.0",
     "@sel-quest/content-validation": "0.1.0",
     "@sel-quest/narrative-core": "0.1.0",

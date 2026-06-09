@@ -20,7 +20,8 @@
     "content:status": "npm --workspace @sel-quest/content run status --",
     "content:validate": "npm --workspace @sel-quest/content run validate --",
     "test": "npm --workspaces --if-present run test",
-    "test:smoke": "playwright test"
+    "test:smoke": "playwright test",
+    "validate:assets": "npm --workspace @sel-quest/asset-pipeline run validate"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",

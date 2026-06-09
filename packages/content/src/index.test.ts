@@ -6,6 +6,7 @@ import {
   getQuestAuthoringSnapshot,
   getQuestArchivedExpertReviews,
   getQuestExpertReviews,
+  getQuestAssetManifestBySlug,
   getQuestNarrativeBySlug,
   getQuestPublishabilityReasons,
   getQuestValidationReport,
@@ -58,6 +59,19 @@ describe('content package publishability gates', () => {
     expect(
       worldActivityIds.every((activityId) => activityIds.has(activityId))
     ).toBe(true)
+  })
+
+  it('loads the asset manifest bound to the local world', () => {
+    const world = getQuestWorldBySlug('emotion-detective')
+    const assetManifest = getQuestAssetManifestBySlug('emotion-detective')
+
+    expect(assetManifest?.id).toBe(world?.assetManifestId)
+    expect(assetManifest?.performanceBudget.mobileTargetFps).toBe(30)
+    expect(assetManifest?.assets.map((asset) => asset.id)).toEqual([
+      'model_xiaoyu_placeholder',
+      'anim_child_peer_basic',
+      'texture_art_room_placeholder'
+    ])
   })
 
   it('rejects world actions that reference unknown quest activities', () => {

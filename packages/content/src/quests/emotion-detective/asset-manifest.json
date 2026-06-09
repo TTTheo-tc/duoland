@@ -1,0 +1,58 @@
+{
+  "id": "assets_emotion_town_0_1_0",
+  "version": "0.1.0",
+  "title": "心情颜色小镇资产清单",
+  "description": "用于心情颜色小镇单房间 3D 原型的占位资产和预算约束。",
+  "performanceBudget": {
+    "maxInitialDownloadMb": 5,
+    "maxTrianglesPerScene": 12000,
+    "maxTextureSize": 1024,
+    "mobileTargetFps": 30
+  },
+  "assets": [
+    {
+      "id": "model_xiaoyu_placeholder",
+      "kind": "model",
+      "status": "placeholder",
+      "label": "小宇占位角色",
+      "format": "glb",
+      "triangleCount": 800,
+      "animationAssetIds": ["anim_child_peer_basic"],
+      "requiredAnimationClipIds": ["sad_idle"],
+      "license": {
+        "owner": "Duoland",
+        "source": "internal placeholder",
+        "commercialUseAllowed": true
+      },
+      "tags": ["character", "child_peer", "placeholder"]
+    },
+    {
+      "id": "anim_child_peer_basic",
+      "kind": "animation",
+      "status": "placeholder",
+      "label": "儿童同伴基础动作",
+      "format": "json",
+      "clipIds": ["sad_idle"],
+      "license": {
+        "owner": "Duoland",
+        "source": "internal placeholder",
+        "commercialUseAllowed": true
+      },
+      "tags": ["animation", "placeholder"]
+    },
+    {
+      "id": "texture_art_room_placeholder",
+      "kind": "texture",
+      "status": "placeholder",
+      "label": "画室占位材质",
+      "format": "png",
+      "maxDimension": 512,
+      "license": {
+        "owner": "Duoland",
+        "source": "internal placeholder",
+        "commercialUseAllowed": true
+      },
+      "tags": ["environment", "placeholder"]
+    }
+  ]
+}

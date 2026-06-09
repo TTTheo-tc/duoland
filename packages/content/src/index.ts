@@ -9,6 +9,7 @@ import {
 } from '@sel-quest/review-core'
 import {
   getQuestEntryBySlug,
+  getQuestAssetManifestBySlug,
   getQuestNarrativeBySlug,
   getQuestWorldBySlug,
   questEntries,
@@ -33,6 +34,7 @@ export function getQuestValidationReport(slug: string) {
 
 export { getQuestWorldBySlug }
 export { getQuestNarrativeBySlug }
+export { getQuestAssetManifestBySlug }
 
 export function getQuestExpertReviews(slug: string) {
   return getQuestEntryBySlug(slug)?.expertReviews ?? []
