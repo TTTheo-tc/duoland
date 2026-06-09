@@ -14,6 +14,7 @@
     "entrySceneId": "art_room",
     "preferredRenderer": "phaser"
   },
+  "episodeIds": ["episode_xiaoyu_drawing"],
   "learningObjectives": [
     {
       "id": "lo_emotion_recognition",

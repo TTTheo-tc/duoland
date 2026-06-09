@@ -99,6 +99,17 @@ describe('quest-core', () => {
     )
   })
 
+  it('allows a quest to declare narrative episode ids', () => {
+    const narrativeQuest: QuestDefinition = {
+      ...mockQuest,
+      episodeIds: ['episode_intro']
+    }
+
+    expect(validateQuestDefinition(narrativeQuest).episodeIds).toEqual([
+      'episode_intro'
+    ])
+  })
+
   it('rejects unknown preferred world renderers', () => {
     const worldQuest = {
       ...mockQuest,

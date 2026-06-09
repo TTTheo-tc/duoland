@@ -3,6 +3,11 @@ import {
   type QuestDefinition
 } from '@sel-quest/quest-core'
 import {
+  assertNarrativeReferences,
+  validateNarrativeDefinition,
+  type NarrativeDefinition
+} from '@sel-quest/narrative-core'
+import {
   assertWorldBindingReference,
   validateWorldDefinition,
   type WorldDefinition
@@ -17,6 +22,7 @@ import {
 } from '@sel-quest/review-core'
 import emotionDetectiveQuest from './quests/emotion-detective/quest.json'
 import emotionDetectiveWorld from './quests/emotion-detective/world.json'
+import emotionDetectiveNarrative from './quests/emotion-detective/narrative.json'
 import emotionDetectiveValidationReport from './quests/emotion-detective/validation-report.json'
 import emotionDetectiveExpertReviews from './quests/emotion-detective/expert-reviews.json'
 import emotionDetectiveArchivedExpertReviews from './quests/emotion-detective/archived-expert-reviews.json'
@@ -24,6 +30,7 @@ import emotionDetectiveArchivedExpertReviews from './quests/emotion-detective/ar
 export interface QuestEntry {
   quest: QuestDefinition
   world?: WorldDefinition
+  narrative?: NarrativeDefinition
   validationReport: ContentValidationReport
   expertReviews: ContentExpertReview[]
   archivedExpertReviews: ArchivedContentExpertReview[]
@@ -31,6 +38,9 @@ export interface QuestEntry {
 
 const emotionDetective = validateQuestDefinition(emotionDetectiveQuest)
 const emotionDetectiveWorldDefinition = validateWorldDefinition(emotionDetectiveWorld)
+const emotionDetectiveNarrativeDefinition = validateNarrativeDefinition(
+  emotionDetectiveNarrative
+)
 const emotionDetectiveReport = validateContentValidationReport(
   emotionDetectiveValidationReport
 )
@@ -45,6 +55,7 @@ export const questEntries: QuestEntry[] = [
   createQuestEntry({
     quest: emotionDetective,
     world: emotionDetectiveWorldDefinition,
+    narrative: emotionDetectiveNarrativeDefinition,
     validationReport: emotionDetectiveReport,
     expertReviews: emotionDetectiveReviews,
     archivedExpertReviews: emotionDetectiveArchivedReviews
@@ -59,6 +70,10 @@ export function getQuestEntryBySlug(slug: string): QuestEntry | null {
 
 export function getQuestWorldBySlug(slug: string) {
   return getQuestEntryBySlug(slug)?.world ?? null
+}
+
+export function getQuestNarrativeBySlug(slug: string) {
+  return getQuestEntryBySlug(slug)?.narrative ?? null
 }
 
 export function toQuestSummary(quest: QuestDefinition) {
@@ -81,6 +96,30 @@ function createQuestEntry(entry: QuestEntry): QuestEntry {
   if (entry.quest.worldBinding && entry.world) {
     assertWorldBindingReference(entry.quest.worldBinding, entry.world)
     assertWorldActivityReferences(entry)
+  }
+
+  if (
+    entry.quest.episodeIds &&
+    entry.quest.episodeIds.length > 0 &&
+    !entry.narrative
+  ) {
+    throw new Error(`Quest ${entry.quest.id} declares episodeIds without a narrative.`)
+  }
+
+  if (entry.narrative) {
+    assertNarrativeReferences(entry.narrative, {
+      questId: entry.quest.id,
+      episodeIds: entry.quest.episodeIds,
+      activityIds: entry.quest.activities.map((activity) => activity.id),
+      learningObjectiveIds: entry.quest.learningObjectives.map(
+        (objective) => objective.id
+      ),
+      worldZoneIds: entry.world?.zones.map((zone) => zone.id) ?? [],
+      sceneIds: entry.world?.scenes.map((scene) => scene.id) ?? [],
+      interactableIds:
+        entry.world?.interactables.map((interactable) => interactable.id) ?? [],
+      characterIds: entry.world?.characters.map((character) => character.id) ?? []
+    })
   }
 
   return entry

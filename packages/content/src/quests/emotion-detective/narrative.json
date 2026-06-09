@@ -1,0 +1,144 @@
+{
+  "id": "emotion-detective-narrative",
+  "questId": "emotion-detective",
+  "version": "0.1.0",
+  "episodes": [
+    {
+      "id": "episode_xiaoyu_drawing",
+      "questId": "emotion-detective",
+      "title": "小宇的画",
+      "summary": "孩子在画室门口观察小宇的情绪线索，练习识别心情、选择安全表达，并完成冷静练习。",
+      "worldZoneId": "emotion_harbor",
+      "entrySceneId": "art_room",
+      "learningObjectiveIds": [
+        "lo_emotion_recognition",
+        "lo_emotion_behavior_link",
+        "lo_help_seeking"
+      ],
+      "beats": [
+        {
+          "id": "beat_opening_cutscene",
+          "kind": "cutscene",
+          "sceneId": "art_room",
+          "cutsceneId": "cutscene_xiaoyu_intro",
+          "learningObjectiveIds": ["lo_emotion_recognition"],
+          "next": "beat_opening_dialogue"
+        },
+        {
+          "id": "beat_opening_dialogue",
+          "kind": "activity",
+          "sceneId": "art_room",
+          "activityId": "dialogue_intro",
+          "learningObjectiveIds": ["lo_emotion_recognition"],
+          "next": "beat_observe_drawing"
+        },
+        {
+          "id": "beat_observe_drawing",
+          "kind": "world_interaction",
+          "sceneId": "art_room",
+          "interactableId": "crumpled_drawing",
+          "learningObjectiveIds": ["lo_emotion_recognition"],
+          "next": "beat_emotion_choice"
+        },
+        {
+          "id": "beat_emotion_choice",
+          "kind": "activity",
+          "sceneId": "art_room",
+          "activityId": "emotion_choice_001",
+          "learningObjectiveIds": ["lo_emotion_recognition"],
+          "next": "beat_scenario_choice"
+        },
+        {
+          "id": "beat_scenario_choice",
+          "kind": "activity",
+          "sceneId": "art_room",
+          "activityId": "scenario_choice_001",
+          "learningObjectiveIds": [
+            "lo_emotion_behavior_link",
+            "lo_help_seeking"
+          ],
+          "next": "beat_breathing"
+        },
+        {
+          "id": "beat_breathing",
+          "kind": "activity",
+          "sceneId": "art_room",
+          "activityId": "breathing_001",
+          "learningObjectiveIds": ["lo_emotion_behavior_link"],
+          "next": "beat_recap"
+        },
+        {
+          "id": "beat_recap",
+          "kind": "recap",
+          "sceneId": "art_room",
+          "activityId": "recap_001",
+          "learningObjectiveIds": [
+            "lo_emotion_recognition",
+            "lo_emotion_behavior_link",
+            "lo_help_seeking"
+          ]
+        }
+      ]
+    }
+  ],
+  "dialogues": [
+    {
+      "id": "dialogue_xiaoyu_intro",
+      "sceneId": "art_room",
+      "lines": [
+        {
+          "id": "line_001",
+          "speakerId": "guide",
+          "speakerRole": "guide",
+          "speakerName": "心情小侦探",
+          "text": "画室门口的颜色灯变暗了。我们先看看发生了什么。",
+          "emotion": "calm"
+        },
+        {
+          "id": "line_002",
+          "speakerId": "xiaoyu",
+          "speakerRole": "world_character",
+          "speakerName": "小宇",
+          "text": "同学说我画得不好，我现在不想和任何人说话。",
+          "emotion": "sad"
+        }
+      ]
+    }
+  ],
+  "cutscenes": [
+    {
+      "id": "cutscene_xiaoyu_intro",
+      "sceneId": "art_room",
+      "skippable": true,
+      "replayable": true,
+      "learningObjectiveIds": ["lo_emotion_recognition"],
+      "tracks": [
+        {
+          "type": "camera",
+          "at": 0,
+          "duration": 2,
+          "action": "moveTo",
+          "params": {
+            "position": [0, 2, 6],
+            "target": [0, 1, 0]
+          }
+        },
+        {
+          "type": "character",
+          "characterId": "xiaoyu",
+          "at": 0.5,
+          "duration": 1,
+          "action": "setExpression",
+          "params": {
+            "expression": "sad"
+          }
+        },
+        {
+          "type": "dialogue",
+          "dialogueId": "dialogue_xiaoyu_intro",
+          "at": 1
+        }
+      ]
+    }
+  ]
+}
