@@ -692,6 +692,28 @@ export type DataSensitivity =
   | 'psychological_sensitive'
 
 export type QuestStatus = 'draft' | 'published' | 'archived'
+
+export type SelCompetency =
+  | 'self_awareness'
+  | 'self_management'
+  | 'social_awareness'
+  | 'relationship_skills'
+  | 'responsible_decision_making'
+
+export interface SafeLearningDesign {
+  sequenced: boolean
+  active: boolean
+  focused: boolean
+  explicit: boolean
+}
+
+export interface LearningObjective {
+  id: string
+  title: string
+  childFacingText: string
+  selCompetencies: SelCompetency[]
+  safe: SafeLearningDesign
+}
 ```
 
 ### 7.3 QuestDefinition
@@ -711,7 +733,7 @@ export interface QuestDefinition {
   ageBand: AgeBand
   estimatedMinutes: number
 
-  learningObjectives: string[]
+  learningObjectives: LearningObjective[]
 
   safety: QuestSafetyDefinition
   guardianSummary: GuardianSummary
@@ -938,6 +960,7 @@ export const ActivityDefinitionSchema = z.object({
     'recap'
   ]),
   title: z.string().optional(),
+  learningObjectiveIds: z.array(z.string().min(1)).min(1),
   config: z.unknown(),
   completion: ActivityCompletionRuleSchema,
   safety: z
@@ -948,6 +971,29 @@ export const ActivityDefinitionSchema = z.object({
       dataSensitivity: DataSensitivitySchema.optional()
     })
     .optional()
+})
+
+export const SelCompetencySchema = z.enum([
+  'self_awareness',
+  'self_management',
+  'social_awareness',
+  'relationship_skills',
+  'responsible_decision_making'
+])
+
+export const SafeLearningDesignSchema = z.object({
+  sequenced: z.boolean(),
+  active: z.boolean(),
+  focused: z.boolean(),
+  explicit: z.boolean()
+})
+
+export const LearningObjectiveSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  childFacingText: z.string().min(1),
+  selCompetencies: z.array(SelCompetencySchema).min(1),
+  safe: SafeLearningDesignSchema
 })
 
 export const QuestDefinitionSchema = z.object({
@@ -967,7 +1013,7 @@ export const QuestDefinitionSchema = z.object({
   ]),
   ageBand: AgeBandSchema,
   estimatedMinutes: z.number().int().positive(),
-  learningObjectives: z.array(z.string().min(1)).min(1),
+  learningObjectives: z.array(LearningObjectiveSchema).min(1),
   safety: QuestSafetySchema,
   guardianSummary: z.object({
     title: z.string().min(1),
@@ -1325,7 +1371,8 @@ export interface EmotionCardActivityConfig {
     emoji?: string
     description?: string
   }>
-  correctEmotionIds?: string[]
+  acceptableEmotionIds?: string[]
+  correctEmotionIds?: string[] // legacy alias; validators prefer acceptableEmotionIds
   feedbackByEmotionId?: Record<string, string>
 }
 ```
@@ -1824,9 +1871,42 @@ assets.json
   "ageBand": "8-10",
   "estimatedMinutes": 12,
   "learningObjectives": [
-    "识别常见情绪",
-    "理解情绪和行为的关系",
-    "学习在困难情境中寻求帮助"
+    {
+      "id": "lo_emotion_recognition",
+      "title": "识别常见情绪",
+      "childFacingText": "我能说出角色可能正在经历的心情。",
+      "selCompetencies": ["self_awareness"],
+      "safe": {
+        "sequenced": true,
+        "active": true,
+        "focused": true,
+        "explicit": true
+      }
+    },
+    {
+      "id": "lo_emotion_behavior_link",
+      "title": "理解情绪和行为的关系",
+      "childFacingText": "我能分辨心情和行为选择之间的关系。",
+      "selCompetencies": ["self_awareness", "self_management"],
+      "safe": {
+        "sequenced": true,
+        "active": true,
+        "focused": true,
+        "explicit": true
+      }
+    },
+    {
+      "id": "lo_help_seeking",
+      "title": "学习在困难情境中寻求帮助",
+      "childFacingText": "我能在困难情境中选择向可信赖的大人求助。",
+      "selCompetencies": ["relationship_skills", "responsible_decision_making"],
+      "safe": {
+        "sequenced": true,
+        "active": true,
+        "focused": true,
+        "explicit": true
+      }
+    }
   ],
   "safety": {
     "dataSensitivity": "low",
@@ -1915,6 +1995,7 @@ assets.json
       "id": "dialogue_intro",
       "kind": "dialogue",
       "title": "故事开始",
+      "learningObjectiveIds": ["lo_emotion_recognition"],
       "completion": { "type": "auto" },
       "safety": { "allowsFreeTextInput": false },
       "config": {
@@ -1937,6 +2018,7 @@ assets.json
       "id": "emotion_choice_001",
       "kind": "emotion-card",
       "title": "选择可能的心情",
+      "learningObjectiveIds": ["lo_emotion_recognition"],
       "completion": { "type": "user_submit" },
       "safety": { "allowsFreeTextInput": false },
       "config": {
@@ -1947,7 +2029,7 @@ assets.json
           { "id": "happy", "label": "开心", "emoji": "😊" },
           { "id": "worried", "label": "担心", "emoji": "😟" }
         ],
-        "correctEmotionIds": ["angry", "sad"],
+        "acceptableEmotionIds": ["angry", "sad"],
         "feedbackByEmotionId": {
           "angry": "是的，被别人否定时，有些人会感到生气。",
           "sad": "是的，被别人否定时，也可能会感到难过。"
@@ -1958,6 +2040,10 @@ assets.json
       "id": "scenario_choice_001",
       "kind": "scenario-choice",
       "title": "选择一种应对方式",
+      "learningObjectiveIds": [
+        "lo_emotion_behavior_link",
+        "lo_help_seeking"
+      ],
       "completion": { "type": "user_submit" },
       "safety": { "allowsFreeTextInput": false },
       "config": {
@@ -1990,6 +2076,7 @@ assets.json
       "id": "breathing_001",
       "kind": "breathing",
       "title": "深呼吸练习",
+      "learningObjectiveIds": ["lo_emotion_behavior_link"],
       "completion": { "type": "time_elapsed", "minSeconds": 30 },
       "safety": { "allowsFreeTextInput": false },
       "config": {
@@ -2004,6 +2091,11 @@ assets.json
       "id": "recap_001",
       "kind": "recap",
       "title": "今天学到了什么？",
+      "learningObjectiveIds": [
+        "lo_emotion_recognition",
+        "lo_emotion_behavior_link",
+        "lo_help_seeking"
+      ],
       "completion": { "type": "user_submit" },
       "safety": { "allowsFreeTextInput": false },
       "config": {

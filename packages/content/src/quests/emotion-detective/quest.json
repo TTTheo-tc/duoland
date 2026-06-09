@@ -10,9 +10,42 @@
   "ageBand": "8-10",
   "estimatedMinutes": 12,
   "learningObjectives": [
-    "识别常见情绪",
-    "理解情绪和行为的关系",
-    "学习在困难情境中寻求帮助"
+    {
+      "id": "lo_emotion_recognition",
+      "title": "识别常见情绪",
+      "childFacingText": "我能说出角色可能正在经历的心情。",
+      "selCompetencies": ["self_awareness"],
+      "safe": {
+        "sequenced": true,
+        "active": true,
+        "focused": true,
+        "explicit": true
+      }
+    },
+    {
+      "id": "lo_emotion_behavior_link",
+      "title": "理解情绪和行为的关系",
+      "childFacingText": "我能分辨心情和行为选择之间的关系。",
+      "selCompetencies": ["self_awareness", "self_management"],
+      "safe": {
+        "sequenced": true,
+        "active": true,
+        "focused": true,
+        "explicit": true
+      }
+    },
+    {
+      "id": "lo_help_seeking",
+      "title": "学习在困难情境中寻求帮助",
+      "childFacingText": "我能在困难情境中选择向可信赖的大人求助。",
+      "selCompetencies": ["relationship_skills", "responsible_decision_making"],
+      "safe": {
+        "sequenced": true,
+        "active": true,
+        "focused": true,
+        "explicit": true
+      }
+    }
   ],
   "safety": {
     "dataSensitivity": "low",
@@ -101,6 +134,7 @@
       "id": "dialogue_intro",
       "kind": "dialogue",
       "title": "故事开始",
+      "learningObjectiveIds": ["lo_emotion_recognition"],
       "completion": { "type": "auto" },
       "safety": { "allowsFreeTextInput": false },
       "config": {
@@ -128,6 +162,7 @@
       "id": "emotion_choice_001",
       "kind": "emotion-card",
       "title": "选择可能的心情",
+      "learningObjectiveIds": ["lo_emotion_recognition"],
       "completion": { "type": "user_submit" },
       "safety": { "allowsFreeTextInput": false },
       "config": {
@@ -151,6 +186,10 @@
       "id": "scenario_choice_001",
       "kind": "scenario-choice",
       "title": "选择一种应对方式",
+      "learningObjectiveIds": [
+        "lo_emotion_behavior_link",
+        "lo_help_seeking"
+      ],
       "completion": { "type": "user_submit" },
       "safety": { "allowsFreeTextInput": false },
       "config": {
@@ -183,6 +222,7 @@
       "id": "breathing_001",
       "kind": "breathing",
       "title": "深呼吸练习",
+      "learningObjectiveIds": ["lo_emotion_behavior_link"],
       "completion": { "type": "time_elapsed", "minSeconds": 8 },
       "safety": { "allowsFreeTextInput": false },
       "config": {
@@ -197,6 +237,11 @@
       "id": "recap_001",
       "kind": "recap",
       "title": "今天学到了什么？",
+      "learningObjectiveIds": [
+        "lo_emotion_recognition",
+        "lo_emotion_behavior_link",
+        "lo_help_seeking"
+      ],
       "completion": { "type": "user_submit" },
       "safety": { "allowsFreeTextInput": false },
       "config": {

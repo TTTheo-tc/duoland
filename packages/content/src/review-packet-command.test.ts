@@ -36,6 +36,13 @@ describe('content review packet command', () => {
     expect(result.exitCode).toBe(0)
     expect(packet.contentHash).toBe(validationReport.contentHash)
     expect(packet.validation.status).toBe('passed')
+    expect(packet.questSummary.learningObjectives[0]).toMatchObject({
+      id: 'lo_emotion_recognition',
+      childFacingText: 'I can name how a character may feel.'
+    })
+    expect(packet.reviewableContent.learningObjectives).toEqual(
+      packet.questSummary.learningObjectives
+    )
     expect(packet.reviewableContent.guardianSummary.title).toBe(
       'Children practice safe choices'
     )

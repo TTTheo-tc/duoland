@@ -29,6 +29,20 @@ export function validateQuestSemantics(
   const issues: QuestValidationIssue[] = []
   const stageIds = new Set<string>()
   const activityIds = new Set<string>()
+  const objectiveIds = new Set<string>()
+
+  for (const objective of quest.learningObjectives) {
+    if (objectiveIds.has(objective.id)) {
+      issues.push(
+        error(
+          `learningObjectives.${objective.id}`,
+          'duplicate_learning_objective_id',
+          'Duplicate learning objective id.'
+        )
+      )
+    }
+    objectiveIds.add(objective.id)
+  }
 
   for (const stage of quest.stages) {
     if (stageIds.has(stage.id)) {
@@ -44,6 +58,18 @@ export function validateQuestSemantics(
       )
     }
     activityIds.add(activity.id)
+
+    for (const objectiveId of activity.learningObjectiveIds) {
+      if (!objectiveIds.has(objectiveId)) {
+        issues.push(
+          error(
+            `activities.${activity.id}.learningObjectiveIds`,
+            'unknown_learning_objective_id',
+            'Activity references an unknown learning objective.'
+          )
+        )
+      }
+    }
   }
 
   for (const stage of quest.stages) {
