@@ -1,11 +1,13 @@
 import type { QuestDefinition } from '@sel-quest/quest-core'
 import {
   createContentHash,
+  defaultContentReviewPolicy,
   getContentPublishabilityReasons,
   getExpertReviewPublishabilityReasons,
   isExpertReviewPublishable,
   type AuthoringState,
   type ContentExpertReview,
+  type ContentReviewPolicy,
   type ContentValidationReport
 } from '@sel-quest/review-core'
 
@@ -50,6 +52,11 @@ export interface AuthoringSnapshot {
   publishabilityReasons: string[]
 }
 
+export interface AuthoringReviewSurfaceInput {
+  usesWorldNarrative?: boolean
+  usesAssetRepresentation?: boolean
+}
+
 export interface AuthoringEvidenceIssue {
   severity: 'error' | 'warning'
   code:
@@ -71,13 +78,18 @@ export function createAuthoringSnapshot(input: {
   quest: QuestDefinition
   validationReport?: ContentValidationReport | null
   expertReviews?: ContentExpertReview[]
+  reviewPolicy?: ContentReviewPolicy
+  reviewSurface?: AuthoringReviewSurfaceInput
 }): AuthoringSnapshot {
   const expertReviews = input.expertReviews ?? []
+  const reviewPolicy =
+    input.reviewPolicy ?? createContentReviewPolicy(input.reviewSurface)
   const contentHash = createQuestContentHash(input.quest)
   const state = deriveAuthoringState({
     quest: input.quest,
     validationReport: input.validationReport,
-    expertReviews
+    expertReviews,
+    reviewPolicy
   })
 
   return {
@@ -90,7 +102,8 @@ export function createAuthoringSnapshot(input: {
     publishabilityReasons: getAuthoringPublishabilityReasons({
       quest: input.quest,
       validationReport: input.validationReport,
-      expertReviews
+      expertReviews,
+      reviewPolicy
     })
   }
 }
@@ -99,7 +112,12 @@ export function deriveAuthoringState(input: {
   quest: QuestDefinition
   validationReport?: ContentValidationReport | null
   expertReviews?: ContentExpertReview[]
+  reviewPolicy?: ContentReviewPolicy
+  reviewSurface?: AuthoringReviewSurfaceInput
 }): AuthoringState {
+  const reviewPolicy =
+    input.reviewPolicy ?? createContentReviewPolicy(input.reviewSurface)
+
   if (input.quest.status === 'archived') return 'archived'
   if (!input.validationReport) return 'drafting'
 
@@ -138,7 +156,8 @@ export function deriveAuthoringState(input: {
       contentItemId: input.quest.id,
       contentVersion: input.quest.version,
       expectedContentHash: createQuestContentHash(input.quest),
-      reviews: matchingExpertReviews
+      reviews: matchingExpertReviews,
+      policy: reviewPolicy
     })
   ) {
     return 'needs_expert_review'
@@ -151,7 +170,11 @@ export function getAuthoringPublishabilityReasons(input: {
   quest: QuestDefinition
   validationReport?: ContentValidationReport | null
   expertReviews?: ContentExpertReview[]
+  reviewPolicy?: ContentReviewPolicy
+  reviewSurface?: AuthoringReviewSurfaceInput
 }) {
+  const reviewPolicy =
+    input.reviewPolicy ?? createContentReviewPolicy(input.reviewSurface)
   const reasons: string[] = []
 
   if (input.quest.status !== 'published') {
@@ -181,17 +204,44 @@ export function getAuthoringPublishabilityReasons(input: {
       contentItemId: input.quest.id,
       contentVersion: input.quest.version,
       expectedContentHash: createQuestContentHash(input.quest),
-      reviews: input.expertReviews ?? []
+      reviews: input.expertReviews ?? [],
+      policy: reviewPolicy
     })
   )
 
   return reasons
 }
 
+export function createContentReviewPolicy(
+  surface: AuthoringReviewSurfaceInput = {}
+): ContentReviewPolicy {
+  const requiredCoverageSections = [
+    ...defaultContentReviewPolicy.requiredCoverageSections
+  ]
+
+  if (surface.usesWorldNarrative) {
+    requiredCoverageSections.push('world_narrative')
+  }
+
+  if (surface.usesAssetRepresentation) {
+    requiredCoverageSections.push('asset_representation')
+  }
+
+  return {
+    minimumApprovalCount: defaultContentReviewPolicy.minimumApprovalCount,
+    minimumDistinctReviewerCount:
+      defaultContentReviewPolicy.minimumDistinctReviewerCount,
+    requiredApprovingRoles: [...defaultContentReviewPolicy.requiredApprovingRoles],
+    requiredCoverageSections: [...new Set(requiredCoverageSections)]
+  }
+}
+
 export function auditAuthoringEvidence(input: {
   quest: QuestDefinition
   validationReport?: ContentValidationReport | null
   expertReviews?: ContentExpertReview[]
+  reviewPolicy?: ContentReviewPolicy
+  reviewSurface?: AuthoringReviewSurfaceInput
 }): AuthoringEvidenceIssue[] {
   const contentHash = createQuestContentHash(input.quest)
   const issues: AuthoringEvidenceIssue[] = []

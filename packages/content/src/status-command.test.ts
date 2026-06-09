@@ -4,7 +4,10 @@ import { describe, expect, it } from 'vitest'
 import {
   createRequiredApprovedReviews,
   runContentScript,
+  validAssetManifest,
+  validNarrative,
   validQuest,
+  validWorld,
   writeQuestFixture
 } from './test-fixtures'
 
@@ -104,6 +107,53 @@ describe('content status command', () => {
     expect(status.evidenceIssues).toEqual([])
     expect(status.validationDriftIssues).toEqual([
       'validation report does not match deterministic validator output'
+    ])
+  })
+
+  it('surfaces supplemental content evidence issues', async () => {
+    const narrativeQuest = {
+      ...validQuest,
+      episodeIds: ['episode_test']
+    }
+    const { questsRoot } = await writeQuestFixture({
+      quest: narrativeQuest,
+      expertReviews: createRequiredApprovedReviews(narrativeQuest, {
+        extraReviewedSections: ['world_narrative', 'asset_representation']
+      }),
+      world: validWorld,
+      assetManifest: validAssetManifest,
+      narrative: {
+        ...validNarrative,
+        episodes: [
+          {
+            ...validNarrative.episodes[0],
+            beats: [
+              {
+                id: 'beat_missing_activity',
+                kind: 'activity',
+                activityId: 'missing_activity',
+                learningObjectiveIds: ['lo_emotion_recognition']
+              }
+            ]
+          }
+        ]
+      }
+    })
+
+    const result = await runStatus(questsRoot)
+    const [status] = JSON.parse(result.stdout)
+
+    expect(result.exitCode).toBe(0)
+    expect(status.authoringState).toBe('auto_validation_failed')
+    expect(status.publishabilityReasons).toContain(
+      'supplemental content evidence is invalid'
+    )
+    expect(status.evidenceIssues).toEqual([
+      {
+        severity: 'error',
+        code: 'supplemental_content_evidence_invalid',
+        message: 'error: unknown_beat_activity_id at episodes.episode_test.beats.beat_missing_activity'
+      }
     ])
   })
 

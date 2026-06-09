@@ -1,7 +1,10 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { validateQuestDefinition } from '@sel-quest/quest-core'
-import { auditAuthoringEvidence } from '@sel-quest/content-authoring'
+import {
+  auditAuthoringEvidence,
+  createContentReviewPolicy
+} from '@sel-quest/content-authoring'
 import {
   validateContentExpertReview,
   validateContentReviewPacket,
@@ -9,11 +12,14 @@ import {
 } from '@sel-quest/review-core'
 import {
   assertQuestDirectorySlug,
+  assertSupplementalContentEvidence,
   getQuestDir,
   getQuestSlugArg,
   getValidationReportDriftIssues,
   normalizeJson,
-  printValidationReportDrift
+  printValidationReportDrift,
+  readJsonIfExists,
+  structuredErrorMessages
 } from './script-utils.mjs'
 
 const args = process.argv.slice(2)
@@ -29,6 +35,15 @@ if (args.includes('--out') && !outPath) {
 }
 
 const questDir = getQuestDir(slug)
+const worldJson = await readJsonIfExists(path.join(questDir, 'world.json'))
+const narrativeJson = await readJsonIfExists(path.join(questDir, 'narrative.json'))
+const assetManifestJson = await readJsonIfExists(
+  path.join(questDir, 'asset-manifest.json')
+)
+const reviewSurface = {
+  usesWorldNarrative: Boolean(worldJson || narrativeJson),
+  usesAssetRepresentation: Boolean(assetManifestJson)
+}
 const quest = validateQuestDefinition(
   JSON.parse(await readFile(path.join(questDir, 'quest.json'), 'utf8'))
 )
@@ -40,10 +55,26 @@ const expertReviews = JSON.parse(
   await readFile(path.join(questDir, 'expert-reviews.json'), 'utf8')
 ).map((review) => validateContentExpertReview(review))
 
+try {
+  assertSupplementalContentEvidence(
+    quest,
+    worldJson,
+    narrativeJson,
+    assetManifestJson
+  )
+} catch (error) {
+  console.error(`${slug}: content evidence audit failed`)
+  for (const message of structuredErrorMessages(error)) {
+    console.error(`- ${message}`)
+  }
+  process.exit(1)
+}
+
 const evidenceIssues = auditAuthoringEvidence({
   quest,
   validationReport,
-  expertReviews
+  expertReviews,
+  reviewSurface
 })
 
 if (evidenceIssues.length > 0) {
@@ -92,7 +123,10 @@ const packet = validateContentReviewPacket({
     teacherGuide: normalizeJson(quest.teacherGuide),
     stages: normalizeJson(quest.stages),
     activities: normalizeJson(quest.activities),
-    assets: normalizeJson(quest.assets)
+    assets: normalizeJson(quest.assets),
+    world: normalizeOptionalJson(worldJson),
+    narrative: normalizeOptionalJson(narrativeJson),
+    assetManifest: normalizeOptionalJson(assetManifestJson)
   },
   validation: {
     reportId: validationReport.id,
@@ -117,7 +151,7 @@ const packet = validateContentReviewPacket({
     'Check that child-facing feedback validates emotions before guiding behavior.',
     'Check that no diagnostic, therapy, or crisis-handling advice is given to the child.',
     'Confirm guardian and teacher guidance matches the child-facing activity intent.',
-    'Record reviewedSections for child_content, guardian_summary, teacher_guide, safety_policy, and activity_feedback when covered.',
+    `Record reviewedSections for ${getRequiredReviewSections().join(', ')} when covered.`,
     'Publication requires approved reviews from at least two distinct reviewers, including school_mental_health_teacher and safety_reviewer roles.',
     'Mark decision as approved only after requiredFollowUps is empty.'
   ],
@@ -158,6 +192,14 @@ function getOptionValue(name) {
   const value = args[index + 1]
   if (!value || value.startsWith('--')) return null
   return value
+}
+
+function getRequiredReviewSections() {
+  return createContentReviewPolicy(reviewSurface).requiredCoverageSections
+}
+
+function normalizeOptionalJson(value) {
+  return value ? normalizeJson(value) : undefined
 }
 
 function compactTimestamp(value) {
