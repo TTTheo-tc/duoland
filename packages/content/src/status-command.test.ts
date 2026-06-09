@@ -2,7 +2,7 @@ import { writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
-  createApprovedReview,
+  createRequiredApprovedReviews,
   runContentScript,
   validQuest,
   writeQuestFixture
@@ -23,7 +23,16 @@ describe('content status command', () => {
     expect(status.authoringState).toBe('needs_expert_review')
     expect(status.publishabilityReasons).toEqual([
       'quest status is draft',
-      'missing expert approval'
+      'missing expert approval',
+      'requires at least 2 approved expert reviews',
+      'requires at least 2 distinct approving reviewers',
+      'missing required reviewer role school_mental_health_teacher',
+      'missing required reviewer role safety_reviewer',
+      'missing review coverage section child_content',
+      'missing review coverage section guardian_summary',
+      'missing review coverage section teacher_guide',
+      'missing review coverage section safety_policy',
+      'missing review coverage section activity_feedback'
     ])
     expect(status.evidenceIssues).toEqual([])
   })
@@ -31,7 +40,7 @@ describe('content status command', () => {
   it('reports approved content before publication', async () => {
     const { questsRoot } = await writeQuestFixture({
       quest: validQuest,
-      expertReviews: [createApprovedReview(validQuest)]
+      expertReviews: createRequiredApprovedReviews(validQuest)
     })
 
     const result = await runStatus(questsRoot)
@@ -39,7 +48,7 @@ describe('content status command', () => {
 
     expect(result.exitCode).toBe(0)
     expect(status.authoringState).toBe('approved')
-    expect(status.expertReviewCount).toBe(1)
+    expect(status.expertReviewCount).toBe(2)
     expect(status.publishabilityReasons).toEqual(['quest status is draft'])
   })
 

@@ -108,6 +108,7 @@ const packet = validateContentReviewPacket({
     id: review.id,
     reviewer: review.reviewer,
     decision: review.decision,
+    reviewCoverage: review.reviewCoverage,
     requiredFollowUpCount: review.requiredFollowUps.length,
     createdAt: review.createdAt
   })),
@@ -116,6 +117,8 @@ const packet = validateContentReviewPacket({
     'Check that child-facing feedback validates emotions before guiding behavior.',
     'Check that no diagnostic, therapy, or crisis-handling advice is given to the child.',
     'Confirm guardian and teacher guidance matches the child-facing activity intent.',
+    'Record reviewedSections for child_content, guardian_summary, teacher_guide, safety_policy, and activity_feedback when covered.',
+    'Publication requires approved reviews from at least two distinct reviewers, including school_mental_health_teacher and safety_reviewer roles.',
     'Mark decision as approved only after requiredFollowUps is empty.'
   ],
   reviewTemplate: {
@@ -129,6 +132,9 @@ const packet = validateContentReviewPacket({
     },
     decision: 'changes_requested',
     reviewedIssueIds: validationReport.issues.map((issue) => issue.id),
+    reviewCoverage: {
+      reviewedSections: []
+    },
     notes: ['Replace this note with expert review notes.'],
     requiredFollowUps: [
       'Replace this follow-up with required changes, or set to [] after explicit approval.'

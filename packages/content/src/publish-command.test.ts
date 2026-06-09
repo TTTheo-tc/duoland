@@ -2,7 +2,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
-  createApprovedReview,
+  createRequiredApprovedReviews,
   runContentScript,
   validQuest,
   writeQuestFixture
@@ -23,7 +23,7 @@ describe('content publish command', () => {
   it('does not change quest status during dry runs', async () => {
     const { questsRoot } = await writeQuestFixture({
       quest: validQuest,
-      expertReviews: [createApprovedReview(validQuest)]
+      expertReviews: createRequiredApprovedReviews(validQuest)
     })
 
     const result = await runPublish(questsRoot, ['test-quest', '--dry-run'])
@@ -39,7 +39,7 @@ describe('content publish command', () => {
   it('publishes only when validation and expert review evidence match', async () => {
     const { questsRoot } = await writeQuestFixture({
       quest: validQuest,
-      expertReviews: [createApprovedReview(validQuest)]
+      expertReviews: createRequiredApprovedReviews(validQuest)
     })
 
     const result = await runPublish(questsRoot, ['test-quest'])
@@ -55,7 +55,7 @@ describe('content publish command', () => {
   it('blocks publish when validation report content drifts without a hash change', async () => {
     const { questsRoot, validationReport } = await writeQuestFixture({
       quest: validQuest,
-      expertReviews: [createApprovedReview(validQuest)]
+      expertReviews: createRequiredApprovedReviews(validQuest)
     })
     const reportPath = path.join(
       questsRoot,
@@ -93,7 +93,7 @@ describe('content publish command', () => {
     }
     const { questsRoot } = await writeQuestFixture({
       quest: worldBoundQuest,
-      expertReviews: [createApprovedReview(worldBoundQuest)]
+      expertReviews: createRequiredApprovedReviews(worldBoundQuest)
     })
 
     const result = await runPublish(questsRoot, ['test-quest'])
@@ -113,7 +113,7 @@ describe('content publish command', () => {
     }
     const { questsRoot } = await writeQuestFixture({
       quest: worldBoundQuest,
-      expertReviews: [createApprovedReview(worldBoundQuest)],
+      expertReviews: createRequiredApprovedReviews(worldBoundQuest),
       world: validWorld,
       assetManifest: validAssetManifest
     })
@@ -128,7 +128,7 @@ describe('content publish command', () => {
   it('blocks publish when world asset evidence is missing', async () => {
     const { questsRoot } = await writeQuestFixture({
       quest: validQuest,
-      expertReviews: [createApprovedReview(validQuest)],
+      expertReviews: createRequiredApprovedReviews(validQuest),
       world: validWorld
     })
 
@@ -142,7 +142,7 @@ describe('content publish command', () => {
   it('blocks publish when world asset references drift', async () => {
     const { questsRoot } = await writeQuestFixture({
       quest: validQuest,
-      expertReviews: [createApprovedReview(validQuest)],
+      expertReviews: createRequiredApprovedReviews(validQuest),
       world: {
         ...validWorld,
         characters: [

@@ -138,7 +138,16 @@ describe('content package publishability gates', () => {
     expect(snapshot?.contentHash).toBe(report?.contentHash)
     expect(snapshot?.publishabilityReasons).toEqual([
       'quest status is draft',
-      'missing expert approval'
+      'missing expert approval',
+      'requires at least 2 approved expert reviews',
+      'requires at least 2 distinct approving reviewers',
+      'missing required reviewer role school_mental_health_teacher',
+      'missing required reviewer role safety_reviewer',
+      'missing review coverage section child_content',
+      'missing review coverage section guardian_summary',
+      'missing review coverage section teacher_guide',
+      'missing review coverage section safety_policy',
+      'missing review coverage section activity_feedback'
     ])
   })
 
@@ -147,7 +156,16 @@ describe('content package publishability gates', () => {
     expect(listPublishableQuests()).toEqual([])
     expect(getQuestPublishabilityReasons('emotion-detective')).toEqual([
       'quest status is draft',
-      'missing expert approval'
+      'missing expert approval',
+      'requires at least 2 approved expert reviews',
+      'requires at least 2 distinct approving reviewers',
+      'missing required reviewer role school_mental_health_teacher',
+      'missing required reviewer role safety_reviewer',
+      'missing review coverage section child_content',
+      'missing review coverage section guardian_summary',
+      'missing review coverage section teacher_guide',
+      'missing review coverage section safety_policy',
+      'missing review coverage section activity_feedback'
     ])
     expect(() => assertQuestPublishable('emotion-detective')).toThrow()
   })

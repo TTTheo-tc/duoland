@@ -55,6 +55,7 @@ describe('content review packet command', () => {
     expect(packet.reviewableContent.assets).toEqual(questWithAsset.assets)
     expect(packet.existingReviews).toEqual([])
     expect(packet.reviewTemplate.decision).toBe('changes_requested')
+    expect(packet.reviewTemplate.reviewCoverage.reviewedSections).toEqual([])
     expect(packet.reviewTemplate.requiredFollowUps.length).toBeGreaterThan(0)
   })
 
