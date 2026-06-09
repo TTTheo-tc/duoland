@@ -63,6 +63,7 @@
       "sceneId": "art_room",
       "type": "npc",
       "label": "小宇",
+      "characterId": "xiaoyu",
       "position": [0, 0, 0],
       "radius": 1.2,
       "onInteract": [

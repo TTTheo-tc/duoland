@@ -127,6 +127,7 @@ export interface InteractableDefinition {
   sceneId: string
   type: InteractableType
   label: string
+  characterId?: string
   position: Vec3
   radius: number
   onInteract: WorldAction[]

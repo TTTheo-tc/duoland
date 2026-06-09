@@ -76,6 +76,7 @@ const world: WorldDefinition = {
       sceneId: 'art_room',
       type: 'npc',
       label: 'Xiaoyu',
+      characterId: 'xiaoyu',
       position: [0, 0, 0],
       radius: 1.2,
       onInteract: [{ type: 'start_dialogue', dialogueId: 'dialogue_xiaoyu_intro' }]
@@ -166,6 +167,82 @@ describe('world-core', () => {
 
     expect(validateWorldSemantics(invalidWorld).map((issue) => issue.code)).toContain(
       'scene_zone_mismatch'
+    )
+  })
+
+  it('requires npc interactables to reference a placed character', () => {
+    const invalidWorld: WorldDefinition = {
+      ...world,
+      interactables: [
+        {
+          ...world.interactables[0],
+          characterId: 'missing_character'
+        },
+        world.interactables[1]
+      ]
+    }
+
+    expect(validateWorldSemantics(invalidWorld).map((issue) => issue.code)).toContain(
+      'unknown_npc_character_id'
+    )
+  })
+
+  it('rejects npc interactables without character references', () => {
+    const invalidWorld: WorldDefinition = {
+      ...world,
+      interactables: [
+        {
+          ...world.interactables[0],
+          characterId: undefined
+        },
+        world.interactables[1]
+      ]
+    }
+
+    expect(validateWorldSemantics(invalidWorld).map((issue) => issue.code)).toContain(
+      'missing_npc_character_id'
+    )
+  })
+
+  it('rejects npc interactables for characters outside their scene', () => {
+    const invalidWorld: WorldDefinition = {
+      ...world,
+      characters: [
+        ...world.characters,
+        {
+          ...world.characters[0],
+          id: 'mira',
+          name: 'Mira'
+        }
+      ],
+      interactables: [
+        {
+          ...world.interactables[0],
+          characterId: 'mira'
+        },
+        world.interactables[1]
+      ]
+    }
+
+    expect(validateWorldSemantics(invalidWorld).map((issue) => issue.code)).toContain(
+      'npc_character_missing_from_scene'
+    )
+  })
+
+  it('rejects character references on non-npc interactables', () => {
+    const invalidWorld: WorldDefinition = {
+      ...world,
+      interactables: [
+        world.interactables[0],
+        {
+          ...world.interactables[1],
+          characterId: 'xiaoyu'
+        }
+      ]
+    }
+
+    expect(validateWorldSemantics(invalidWorld).map((issue) => issue.code)).toContain(
+      'unexpected_interactable_character_id'
     )
   })
 
