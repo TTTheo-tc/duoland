@@ -3,13 +3,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import type { Mesh } from 'three'
-import type { QuestRendererEvent } from '@sel-quest/game-runtime'
 import type {
   CharacterPlacement,
   InteractableDefinition,
   SceneDefinition,
-  WorldDefinition
+  WorldDefinition,
+  WorldRendererToRuntimeEvent
 } from '@sel-quest/world-core'
+import { createInteractableClickedEvent } from './events'
 
 const DEFAULT_CAMERA_POSITION: [number, number, number] = [0, 2.4, 6]
 const DEFAULT_CAMERA_TARGET: [number, number, number] = [0, 0.9, 0]
@@ -19,7 +20,7 @@ export interface R3FWorldCanvasProps {
   world: WorldDefinition
   sceneId?: string
   preserveDrawingBuffer?: boolean
-  onRendererEvent?: (event: QuestRendererEvent) => void
+  onRendererEvent?: (event: WorldRendererToRuntimeEvent) => void
 }
 
 export function R3FWorldCanvas({
@@ -49,10 +50,7 @@ export function R3FWorldCanvas({
 
   const selectInteractable = (interactable: InteractableDefinition) => {
     setSelectedId(interactable.id)
-    onRendererEvent?.({
-      type: 'INTERACTABLE_CLICKED',
-      payload: { interactableId: interactable.id }
-    })
+    onRendererEvent?.(createInteractableClickedEvent(interactable.id))
   }
 
   return (
