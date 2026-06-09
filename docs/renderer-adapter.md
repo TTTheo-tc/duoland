@@ -1,4 +1,4 @@
-# Renderer Adapter Plan
+# Renderer Adapter
 
 Renderers are visual adapters. They must not own quest progress, content
 publishability, validation, review, or child safety policy.
@@ -9,6 +9,7 @@ The current app uses:
 
 - React for product UI and activity rendering.
 - Phaser for the lightweight quest map visualization.
+- `renderer-r3f` for an experimental single-room world playground.
 - XState in `quest-core` for quest progression.
 
 This is a good MVP shape, but Phaser should not become the platform core.
@@ -21,7 +22,7 @@ QuestPlayer
     -> renderer adapter
       -> React renderer
       -> Phaser renderer
-      -> future R3F renderer
+      -> R3F renderer
 ```
 
 Renderer adapters receive public state and emit structured events.
@@ -32,7 +33,7 @@ They should receive:
 - current activity ID
 - completed stage and activity IDs
 - public flags
-- scene or world state when `world-core` exists
+- scene or world state from `world-core`
 
 They may emit:
 
@@ -57,9 +58,12 @@ runtime state.
 
 ## R3F
 
-Future Web 3D work should start with `renderer-r3f` and `apps/playground`, not
-by modifying `quest-core`. The first R3F target should be a single room, one
-character, one interactable, one cutscene, and one activity overlay.
+Web 3D work has started with `renderer-r3f` and a playground route. The current
+target remains intentionally small: one room, one character, a small set of
+selectable interactables, and one story beat. The content fixture references
+activity transitions, but the current playground only renders the scene and
+selectable interactables. Expansion should happen in renderer and world
+packages, not by modifying `quest-core`.
 
 ## Asset Pipeline
 

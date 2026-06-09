@@ -26,11 +26,11 @@ schema checks, tests, validators, expert review, or release gates.
 
 1. `quest-core` owns quest schema, progress, events, and the quest state
    machine. It must remain renderer-independent.
-2. `world-core` will own world, zone, scene, character, interactable, and world
-   state models. It must remain renderer-independent.
-3. `narrative-core` will own episode, beat, dialogue, cutscene, and branch
-   models. It must remain renderer-independent.
-4. Renderers are adapters. Phaser, React, and future R3F renderers must not own
+2. `world-core` owns world, zone, scene, character, interactable, and world
+   runtime state models. It must remain renderer-independent.
+3. `narrative-core` owns episode, beat, dialogue, cutscene, and branch models.
+   It must remain renderer-independent.
+4. Renderers are adapters. Phaser, React, and R3F renderers must not own
    learning progress or publishability decisions.
 5. Content packages own authoring, validation, review, refinement, and
    publishing gates. Runtime packages consume only published or explicit preview
@@ -47,8 +47,8 @@ schema checks, tests, validators, expert review, or release gates.
 
 1. Every published quest must be versioned, validated, reviewed, and
    publishable.
-2. Every SEL activity should map to explicit learning objectives and SEL
-   competencies as soon as the structured objective schema is introduced.
+2. Every SEL activity must map to explicit learning objectives and SEL
+   competencies.
 3. SEL content should be sequenced, active, focused, and explicit.
 4. Feedback should validate the child's emotion before guiding behavior.
 5. Crisis, abuse, self-harm, bullying, or family violence content requires
