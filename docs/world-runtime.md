@@ -1,9 +1,9 @@
-# World Runtime Plan
+# World Runtime
 
-Duoland should evolve from a linear quest MVP into a world-based SEL quest
-platform. The current `quest-core` should remain the learning runtime. A future
-`world-core` should model spatial and character context without depending on any
-renderer.
+Duoland is evolving from a linear quest MVP into a world-based SEL quest
+platform. `quest-core` remains the learning runtime. `world-core` now models
+spatial and character context without depending on any renderer, and
+`narrative-core` models episodes, beats, dialogue, and cutscenes.
 
 ## Separation Of Responsibilities
 
@@ -24,20 +24,27 @@ renderer adapters
 World state must not replace quest progress. It should provide context and
 visual continuity around the learning flow.
 
-## Future Core Types
+## Current Core Types
 
-`world-core` should eventually define:
+`world-core` currently defines and validates the world definition and runtime
+state types:
 
 - `WorldDefinition`
 - `WorldZone`
 - `SceneDefinition`
 - `CharacterDefinition`
 - `InteractableDefinition`
-- `WorldState`
-- `WorldEvent`
+- `WorldRuntimeState`
 - `WorldAction`
 
-The first version should support one small world:
+It also defines renderer/runtime event TypeScript contracts:
+
+- `WorldRuntimeToRendererEvent`
+- `WorldRendererToRuntimeEvent`
+
+Those event contracts are typed, but they are not yet schema-validated.
+
+The current content fixture includes one small world:
 
 ```text
 one zone
@@ -45,7 +52,6 @@ one scene
 one NPC
 one observable object
 one activity entry point
-one world flag change after activity completion
 ```
 
 ## Design Rules
@@ -59,19 +65,33 @@ one world flag change after activity completion
 5. World validation should check references among zones, scenes, characters,
    interactables, assets, and narrative beats.
 
-## First Prototype
+## Current Prototype
 
-The first world prototype should be a single-room version of `emotion-detective`:
+The first world prototype is a single-room version of `emotion-detective`:
 
 ```text
 scene: art room
 character: Xiaoyu
 object: crumpled drawing
-cutscene: camera moves from drawing to Xiaoyu
-activity: emotion-card
-activity: scenario-choice
-feedback: room color changes after a supportive choice
+cutscene: opening story beat
+fixture activities: emotion-card, scenario-choice
+renderer: R3F playground
 ```
 
-This proves the platform can become a world experience without turning the MVP
-into a large 3D project too early.
+The fixture connects the world and narrative records to existing activities. The
+current playground renders the scene and selectable interactables; it does not
+yet drive quest activity transitions from renderer events. This proves the
+platform can become a world experience without turning the MVP into a large 3D
+project too early.
+
+## Remaining Gaps
+
+The current world layer is still an early platform slice. Next work should keep
+the same small-surface discipline:
+
+1. Move experimental world playback out of `apps/web` if it starts to become a
+   real authoring or playground product.
+2. Keep renderer state derived from public quest/world state.
+3. Add richer world validation before adding more scenes, assets, or cutscenes.
+4. Keep world interactions structured; do not add free-form child dialogue or
+   AI NPC output.

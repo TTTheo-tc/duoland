@@ -6,8 +6,8 @@ Start here:
 - [Research Basis](./research-basis.md)
 - [Content Lifecycle](./content-lifecycle.md)
 - [Safety Policy](./safety-policy.md)
-- [World Runtime Plan](./world-runtime.md)
-- [Renderer Adapter Plan](./renderer-adapter.md)
+- [World Runtime](./world-runtime.md)
+- [Renderer Adapter](./renderer-adapter.md)
 
 Current app entrypoints:
 
