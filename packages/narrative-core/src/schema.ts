@@ -142,3 +142,38 @@ export const NarrativeRuntimeStateSchema = z.object({
   completedBeatIds: z.array(z.string().min(1)),
   flags: z.record(z.union([z.boolean(), z.string(), z.number()]))
 })
+
+export const NarrativeStateChangedEventSchema = z.object({
+  type: z.literal('NARRATIVE_STATE_CHANGED'),
+  state: NarrativeRuntimeStateSchema
+})
+
+export const NarrativeBeatEnteredEventSchema = z.object({
+  type: z.literal('NARRATIVE_BEAT_ENTERED'),
+  episodeId: z.string().min(1),
+  beatId: z.string().min(1)
+})
+
+export const NarrativeBeatCompletedEventSchema = z.object({
+  type: z.literal('NARRATIVE_BEAT_COMPLETED'),
+  episodeId: z.string().min(1),
+  beatId: z.string().min(1)
+})
+
+export const NarrativeDialogueCompletedEventSchema = z.object({
+  type: z.literal('NARRATIVE_DIALOGUE_COMPLETED'),
+  dialogueId: z.string().min(1)
+})
+
+export const NarrativeCutsceneCompletedEventSchema = z.object({
+  type: z.literal('NARRATIVE_CUTSCENE_COMPLETED'),
+  cutsceneId: z.string().min(1)
+})
+
+export const NarrativeRuntimeEventSchema = z.discriminatedUnion('type', [
+  NarrativeStateChangedEventSchema,
+  NarrativeBeatEnteredEventSchema,
+  NarrativeBeatCompletedEventSchema,
+  NarrativeDialogueCompletedEventSchema,
+  NarrativeCutsceneCompletedEventSchema
+])
