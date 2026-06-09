@@ -1,0 +1,4 @@
+{"id":"major_missing_teacher_guide","title":"SEL quest without teacher guide is blocked","mutation":"missing_teacher_guide","expectedIssueTypes":["guardian_teacher_mismatch"],"expectedSeverity":"major"}
+{"id":"major_unsafe_learning_objective","title":"Learning objectives must satisfy SAFE criteria","mutation":"unsafe_learning_objective","expectedIssueTypes":["ambiguous_scenario"],"expectedSeverity":"major"}
+{"id":"major_emotion_card_without_targets","title":"Emotion cards need acceptable emotion targets","mutation":"emotion_card_without_acceptable_emotions","expectedIssueTypes":["no_safe_response_option"],"expectedSeverity":"major"}
+{"id":"minor_legacy_correct_emotion_ids","title":"Legacy correctEmotionIds is flagged but non-blocking","mutation":"legacy_correct_emotion_ids","expectedIssueTypes":["ambiguous_scenario"],"expectedSeverity":"minor"}

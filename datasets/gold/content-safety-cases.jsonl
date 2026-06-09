@@ -1,0 +1,8 @@
+{"id":"clean_structured_sel_quest","title":"Structured SEL baseline has no validation issues","mutation":"none","expectedIssueTypes":[]}
+{"id":"critical_no_safe_response_option","title":"Scenario choice without a safe option is blocked","mutation":"scenario_without_safe_choice","expectedIssueTypes":["no_safe_response_option"],"expectedSeverity":"critical"}
+{"id":"critical_diagnostic_feedback","title":"Child-facing diagnostic feedback is blocked","mutation":"diagnostic_child_feedback","expectedIssueTypes":["overly_diagnostic"],"expectedSeverity":"critical"}
+{"id":"critical_crisis_without_teacher_handoff","title":"Crisis handling requires teacher handoff guidance","mutation":"crisis_without_teacher_risk_notes","expectedIssueTypes":["unsafe_crisis_handling"],"expectedSeverity":"critical"}
+{"id":"major_quest_free_text","title":"Quest-level child free text is blocked","mutation":"quest_allows_free_text","expectedIssueTypes":["privacy_sensitive_prompt"],"expectedSeverity":"major"}
+{"id":"major_activity_free_text","title":"Activity-level child free text is blocked","mutation":"activity_allows_free_text","expectedIssueTypes":["privacy_sensitive_prompt"],"expectedFieldPaths":["activities.scenario_001.safety.allowsFreeTextInput"],"expectedSeverity":"major","allowAdditionalIssues":true}
+{"id":"major_emotion_invalidating_feedback","title":"Emotion-invalidating feedback is blocked","mutation":"emotion_invalidating_feedback","expectedIssueTypes":["emotion_invalidating"],"expectedSeverity":"major"}
+{"id":"major_privacy_request_text","title":"Child-visible privacy request text is blocked","mutation":"privacy_request_text","expectedIssueTypes":["privacy_sensitive_prompt"],"expectedSeverity":"major"}
