@@ -5,6 +5,9 @@
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
+  "scripts": {
+    "test": "vitest run"
+  },
   "dependencies": {
     "@sel-quest/quest-core": "0.1.0",
     "@sel-quest/review-core": "0.1.0"

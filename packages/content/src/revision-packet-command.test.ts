@@ -89,6 +89,28 @@ describe('content revision packet command', () => {
     expect(packet.revisionTargetCount).toBe(1)
   })
 
+  it('counts non-approved expert reviews without follow-ups as revision targets', async () => {
+    const changesRequested = {
+      ...createApprovedReview(validQuest),
+      id: 'review_changes_requested_002',
+      decision: 'changes_requested',
+      notes: ['Feedback should first validate the child character feeling.'],
+      requiredFollowUps: []
+    } as const
+    const { questsRoot } = await writeQuestFixture({
+      quest: validQuest,
+      expertReviews: [changesRequested]
+    })
+
+    const result = await runRevisionPacket(questsRoot)
+    const packet = validateContentRevisionPacket(JSON.parse(result.stdout))
+
+    expect(result.exitCode).toBe(0)
+    expect(packet.source).toBe('expert_review')
+    expect(packet.expertFollowUps).toHaveLength(1)
+    expect(packet.revisionTargetCount).toBe(1)
+  })
+
   it('writes a revision packet to an explicit output path', async () => {
     const { questsRoot } = await writeQuestFixture({ quest: validQuest })
     const outPath = path.join(questsRoot, 'revision-packet.json')
