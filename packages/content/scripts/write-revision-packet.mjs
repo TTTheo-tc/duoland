@@ -83,7 +83,7 @@ const expertFollowUps = currentReviews
 const revisionTargetCount =
   validationReport.issues.length +
   expertFollowUps.reduce(
-    (count, followUp) => count + followUp.requiredFollowUps.length,
+    (count, followUp) => count + getExpertFollowUpTargetCount(followUp),
     0
   )
 
@@ -132,6 +132,14 @@ function deriveSource(issueCount, followUpCount) {
   if (issueCount > 0) return 'validation'
   if (followUpCount > 0) return 'expert_review'
   return 'none'
+}
+
+function getExpertFollowUpTargetCount(followUp) {
+  if (followUp.requiredFollowUps.length > 0) {
+    return followUp.requiredFollowUps.length
+  }
+
+  return followUp.decision === 'approved' ? 0 : 1
 }
 
 function getOptionValue(name) {
