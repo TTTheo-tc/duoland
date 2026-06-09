@@ -16,6 +16,7 @@
     "baseUrl": ".",
     "paths": {
       "@sel-quest/quest-core": ["packages/quest-core/src/index.ts"],
+      "@sel-quest/asset-pipeline": ["packages/asset-pipeline/src/index.ts"],
       "@sel-quest/content": ["packages/content/src/index.ts"],
       "@sel-quest/content/preview": ["packages/content/src/preview.ts"],
       "@sel-quest/content-authoring": ["packages/content-authoring/src/index.ts"],

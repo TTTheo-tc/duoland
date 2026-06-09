@@ -7,6 +7,8 @@ import { promisify } from 'node:util'
 import { validateSelQuestContent } from '@sel-quest/content-validation'
 import type { QuestDefinition } from '@sel-quest/quest-core'
 import type { ContentExpertReview } from '@sel-quest/review-core'
+import type { AssetManifest } from '@sel-quest/asset-pipeline'
+import type { WorldDefinition } from '@sel-quest/world-core'
 
 const execFileAsync = promisify(execFile)
 const packageRoot = path.resolve(
@@ -129,6 +131,8 @@ export async function writeQuestFixture(input: {
   quest: QuestDefinition
   validationQuest?: QuestDefinition
   expertReviews?: ContentExpertReview[]
+  world?: WorldDefinition
+  assetManifest?: AssetManifest
 }) {
   const questsRoot = await mkdtemp(path.join(os.tmpdir(), 'sel-quest-content-'))
   const questDir = path.join(questsRoot, input.quest.slug)
@@ -151,6 +155,18 @@ export async function writeQuestFixture(input: {
     path.join(questDir, 'expert-reviews.json'),
     `${JSON.stringify(input.expertReviews ?? [], null, 2)}\n`
   )
+  if (input.world) {
+    await writeFile(
+      path.join(questDir, 'world.json'),
+      `${JSON.stringify(input.world, null, 2)}\n`
+    )
+  }
+  if (input.assetManifest) {
+    await writeFile(
+      path.join(questDir, 'asset-manifest.json'),
+      `${JSON.stringify(input.assetManifest, null, 2)}\n`
+    )
+  }
 
   return { questsRoot, validationReport }
 }

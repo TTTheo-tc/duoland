@@ -3,6 +3,12 @@ import {
   type QuestDefinition
 } from '@sel-quest/quest-core'
 import {
+  assertAssetManifestReference,
+  assertWorldAssetReferences,
+  validateAssetManifest,
+  type AssetManifest
+} from '@sel-quest/asset-pipeline'
+import {
   assertNarrativeReferences,
   validateNarrativeDefinition,
   type NarrativeDefinition
@@ -23,6 +29,7 @@ import {
 import emotionDetectiveQuest from './quests/emotion-detective/quest.json'
 import emotionDetectiveWorld from './quests/emotion-detective/world.json'
 import emotionDetectiveNarrative from './quests/emotion-detective/narrative.json'
+import emotionDetectiveAssetManifest from './quests/emotion-detective/asset-manifest.json'
 import emotionDetectiveValidationReport from './quests/emotion-detective/validation-report.json'
 import emotionDetectiveExpertReviews from './quests/emotion-detective/expert-reviews.json'
 import emotionDetectiveArchivedExpertReviews from './quests/emotion-detective/archived-expert-reviews.json'
@@ -31,6 +38,7 @@ export interface QuestEntry {
   quest: QuestDefinition
   world?: WorldDefinition
   narrative?: NarrativeDefinition
+  assetManifest?: AssetManifest
   validationReport: ContentValidationReport
   expertReviews: ContentExpertReview[]
   archivedExpertReviews: ArchivedContentExpertReview[]
@@ -40,6 +48,9 @@ const emotionDetective = validateQuestDefinition(emotionDetectiveQuest)
 const emotionDetectiveWorldDefinition = validateWorldDefinition(emotionDetectiveWorld)
 const emotionDetectiveNarrativeDefinition = validateNarrativeDefinition(
   emotionDetectiveNarrative
+)
+const emotionDetectiveAssetManifestDefinition = validateAssetManifest(
+  emotionDetectiveAssetManifest
 )
 const emotionDetectiveReport = validateContentValidationReport(
   emotionDetectiveValidationReport
@@ -56,6 +67,7 @@ export const questEntries: QuestEntry[] = [
     quest: emotionDetective,
     world: emotionDetectiveWorldDefinition,
     narrative: emotionDetectiveNarrativeDefinition,
+    assetManifest: emotionDetectiveAssetManifestDefinition,
     validationReport: emotionDetectiveReport,
     expertReviews: emotionDetectiveReviews,
     archivedExpertReviews: emotionDetectiveArchivedReviews
@@ -74,6 +86,10 @@ export function getQuestWorldBySlug(slug: string) {
 
 export function getQuestNarrativeBySlug(slug: string) {
   return getQuestEntryBySlug(slug)?.narrative ?? null
+}
+
+export function getQuestAssetManifestBySlug(slug: string) {
+  return getQuestEntryBySlug(slug)?.assetManifest ?? null
 }
 
 export function toQuestSummary(quest: QuestDefinition) {
@@ -96,6 +112,23 @@ function createQuestEntry(entry: QuestEntry): QuestEntry {
   if (entry.quest.worldBinding && entry.world) {
     assertWorldBindingReference(entry.quest.worldBinding, entry.world)
     assertWorldActivityReferences(entry)
+  }
+
+  if (entry.world?.assetManifestId && !entry.assetManifest) {
+    throw new Error(
+      `World ${entry.world.id} declares assetManifestId without an asset manifest.`
+    )
+  }
+
+  if (entry.assetManifest && !entry.world?.assetManifestId) {
+    throw new Error(
+      `Quest ${entry.quest.id} declares an asset manifest without world assetManifestId.`
+    )
+  }
+
+  if (entry.world?.assetManifestId && entry.assetManifest) {
+    assertAssetManifestReference(entry.assetManifest, entry.world.assetManifestId)
+    assertWorldAssetReferences(entry.world, entry.assetManifest)
   }
 
   if (

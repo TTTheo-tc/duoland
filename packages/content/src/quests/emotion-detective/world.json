@@ -7,6 +7,7 @@
     "style": "storybook_3d",
     "mood": ["warm", "safe", "curious"]
   },
+  "assetManifestId": "assets_emotion_town_0_1_0",
   "zones": [
     {
       "id": "emotion_harbor",
