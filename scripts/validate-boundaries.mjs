@@ -48,6 +48,21 @@ const ruleSets = [
     forbiddenReferences: ['@sel-quest/ai-runtime']
   },
   {
+    name: 'Studio app stays separate from child runtime and renderers',
+    roots: ['apps/studio'],
+    forbiddenImports: [
+      '@sel-quest/activities',
+      '@sel-quest/ai-runtime',
+      '@sel-quest/game-runtime',
+      '@sel-quest/persistence',
+      '@sel-quest/renderer-phaser',
+      '@sel-quest/renderer-r3f',
+      '@sel-quest/safety',
+      'phaser',
+      'three'
+    ]
+  },
+  {
     name: 'Core and authoring packages stay renderer-independent',
     roots: [
       'packages/ai-runtime',

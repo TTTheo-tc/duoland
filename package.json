@@ -8,9 +8,11 @@
   ],
   "scripts": {
     "dev": "npm --workspace @sel-quest/web run dev",
-    "build": "npm --workspace @sel-quest/web run build",
+    "dev:studio": "npm --workspace @sel-quest/studio run dev",
+    "build": "npm --workspace @sel-quest/web run build && npm --workspace @sel-quest/studio run build",
+    "build:studio": "npm --workspace @sel-quest/studio run build",
     "check": "npm run validate:boundaries && npm run lint && npm test && npm run content:check-validation && npm run audit:content && npm run validate:assets && npm run validate:validators && npm run build",
-    "lint": "npm --workspace @sel-quest/web run lint",
+    "lint": "npm --workspace @sel-quest/web run lint && npm --workspace @sel-quest/studio run lint",
     "audit:content": "npm --workspace @sel-quest/content run audit",
     "content:archive-stale-reviews": "npm --workspace @sel-quest/content run archive-stale-reviews --",
     "content:check-validation": "npm --workspace @sel-quest/content run check-validation --",
