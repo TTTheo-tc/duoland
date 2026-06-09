@@ -1,19 +1,26 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import type {
+  QuestRendererEvent,
+  QuestRendererProps
+} from '@sel-quest/game-runtime'
 import type { QuestDefinition } from '@sel-quest/quest-core'
 
 export function PhaserCanvas({
   quest,
-  currentStageId,
-  completedStageIds
-}: {
-  quest: QuestDefinition
-  currentStageId?: string
-  completedStageIds: string[]
-}) {
+  questState,
+  onRendererEvent
+}: QuestRendererProps<QuestDefinition>) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const gameRef = useRef<unknown>(null)
+  const onRendererEventRef = useRef(onRendererEvent)
+  const completedStageKey = questState.completedStageIds.join('|')
+  const currentStageId = questState.currentStageId
+
+  useEffect(() => {
+    onRendererEventRef.current = onRendererEvent
+  }, [onRendererEvent])
 
   useEffect(() => {
     let disposed = false
@@ -26,6 +33,9 @@ export function PhaserCanvas({
       class QuestMapScene extends Phaser.Scene {
         create() {
           const width = this.scale.width
+          const completedStageIds = completedStageKey
+            ? completedStageKey.split('|')
+            : []
           this.add.rectangle(width / 2, 140, width - 40, 210, 0xf7f0de, 1)
             .setStrokeStyle(2, 0x243447)
           this.add.text(24, 28, '心情颜色小镇', {
@@ -40,8 +50,15 @@ export function PhaserCanvas({
             const isDone = completedStageIds.includes(stage.id)
             const isCurrent = currentStageId === stage.id
             const color = isCurrent ? 0x2563eb : isDone ? 0x16a34a : 0xffffff
-            this.add.circle(x, y, isCurrent ? 20 : 17, color, 1)
+            const node = this.add.circle(x, y, isCurrent ? 20 : 17, color, 1)
               .setStrokeStyle(3, 0x243447)
+              .setInteractive({ useHandCursor: true })
+            node.on('pointerup', () => {
+              sendRendererEvent(onRendererEventRef.current, {
+                type: 'MAP_NODE_CLICKED',
+                payload: { stageId: stage.id }
+              })
+            })
             this.add.text(x - 10, y - 9, String(index + 1), {
               color: isCurrent || isDone ? '#ffffff' : '#243447',
               fontFamily: 'Arial',
@@ -75,7 +92,11 @@ export function PhaserCanvas({
         gameRef.current = null
       }
     }
-  }, [completedStageIds, currentStageId, quest.stages])
+  }, [
+    completedStageKey,
+    currentStageId,
+    quest.stages
+  ])
 
   return (
     <section className="map-panel" aria-label="任务地图">
@@ -92,4 +113,11 @@ export function PhaserCanvas({
       </ol>
     </section>
   )
+}
+
+function sendRendererEvent(
+  onRendererEvent: ((event: QuestRendererEvent) => void) | undefined,
+  event: QuestRendererEvent
+) {
+  onRendererEvent?.(event)
 }

@@ -1,0 +1,1 @@
+export { PhaserCanvas } from './PhaserCanvas'
