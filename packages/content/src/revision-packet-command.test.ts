@@ -21,6 +21,10 @@ describe('content revision packet command', () => {
     expect(result.exitCode).toBe(0)
     expect(packet.contentHash).toBe(validationReport.contentHash)
     expect(packet.source).toBe('none')
+    expect(packet.questSummary.learningObjectives[0]).toMatchObject({
+      id: 'lo_emotion_recognition',
+      childFacingText: 'I can name how a character may feel.'
+    })
     expect(packet.revisionTargetCount).toBe(0)
     expect(packet.validation.issues).toEqual([])
     expect(packet.expertFollowUps).toEqual([])

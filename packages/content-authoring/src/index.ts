@@ -12,7 +12,7 @@ export interface QuestGenerationBrief {
   title: string
   domain: QuestDefinition['domain']
   ageBand: QuestDefinition['ageBand']
-  learningObjectives: string[]
+  learningObjectives: QuestDefinition['learningObjectives']
   sourceExampleQuestId?: string
   constraints?: string[]
 }

@@ -107,14 +107,10 @@ export const validateQuestContent = validateSelQuestContent
 function validateLearningObjectives(quest: QuestDefinition): ContentIssue[] {
   if (!selDomains.has(quest.domain)) return []
 
-  const hasObjective = quest.learningObjectives.some(
-    (objective) => objective.trim().length > 0
-  )
+  const issues: ContentIssue[] = []
 
-  if (hasObjective) return []
-
-  return [
-    createIssue({
+  if (quest.learningObjectives.length === 0) {
+    issues.push(createIssue({
       severity: 'major',
       type: 'ambiguous_scenario',
       quest,
@@ -123,8 +119,49 @@ function validateLearningObjectives(quest: QuestDefinition): ContentIssue[] {
       suggestedFix:
         'Add a child-facing SEL objective such as emotion recognition, help-seeking, empathy, or responsible decision practice.',
       blocksPublishing: true
-    })
-  ]
+    }))
+  }
+
+  for (const objective of quest.learningObjectives) {
+    const safeValues = Object.values(objective.safe)
+    if (safeValues.some((value) => value !== true)) {
+      issues.push(
+        createIssue({
+          severity: 'major',
+          type: 'ambiguous_scenario',
+          quest,
+          fieldPath: `learningObjectives.${objective.id}.safe`,
+          explanation:
+            'SEL learning objectives must satisfy sequenced, active, focused, and explicit design criteria.',
+          suggestedFix:
+            'Revise the objective or quest design so the activity sequence is SAFE: sequenced, active, focused, and explicit.',
+          blocksPublishing: true
+        })
+      )
+    }
+  }
+
+  for (const activity of quest.activities) {
+    const ids = activity.learningObjectiveIds
+    if (!ids || ids.length === 0) {
+      issues.push(
+        createIssue({
+          severity: 'major',
+          type: 'ambiguous_scenario',
+          quest,
+          activity,
+          fieldPath: `activities.${activity.id}.learningObjectiveIds`,
+          explanation:
+            'SEL activities must map to at least one explicit learning objective.',
+          suggestedFix:
+            'Add learningObjectiveIds that point to the objective practiced by this activity.',
+          blocksPublishing: true
+        })
+      )
+    }
+  }
+
+  return issues
 }
 
 function validateSafetyBoundary(quest: QuestDefinition): ContentIssue[] {
@@ -389,10 +426,16 @@ function collectTextNodes(quest: QuestDefinition) {
     { fieldPath: 'title', text: quest.title },
     ...(quest.subtitle ? [{ fieldPath: 'subtitle', text: quest.subtitle }] : []),
     { fieldPath: 'description', text: quest.description },
-    ...quest.learningObjectives.map((text, index) => ({
-      fieldPath: `learningObjectives.${index}`,
-      text
-    })),
+    ...quest.learningObjectives.flatMap((objective, index) => [
+      {
+        fieldPath: `learningObjectives.${index}.title`,
+        text: objective.title
+      },
+      {
+        fieldPath: `learningObjectives.${index}.childFacingText`,
+        text: objective.childFacingText
+      }
+    ]),
     ...quest.stages.map((stage) => ({
       stageId: stage.id,
       fieldPath: `stages.${stage.id}.title`,

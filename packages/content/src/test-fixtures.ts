@@ -24,7 +24,32 @@ export const validQuest: QuestDefinition = {
   domain: 'mental_health_education',
   ageBand: '8-10',
   estimatedMinutes: 8,
-  learningObjectives: ['Recognize feelings', 'Ask a trusted adult for help'],
+  learningObjectives: [
+    {
+      id: 'lo_emotion_recognition',
+      title: 'Recognize feelings',
+      childFacingText: 'I can name how a character may feel.',
+      selCompetencies: ['self_awareness'],
+      safe: {
+        sequenced: true,
+        active: true,
+        focused: true,
+        explicit: true
+      }
+    },
+    {
+      id: 'lo_help_seeking',
+      title: 'Ask a trusted adult for help',
+      childFacingText: 'I can choose when to ask a trusted adult for help.',
+      selCompetencies: ['relationship_skills', 'responsible_decision_making'],
+      safe: {
+        sequenced: true,
+        active: true,
+        focused: true,
+        explicit: true
+      }
+    }
+  ],
   safety: {
     dataSensitivity: 'low',
     allowsFreeTextInput: false,
@@ -68,6 +93,7 @@ export const validQuest: QuestDefinition = {
     {
       id: 'emotion_001',
       kind: 'emotion-card',
+      learningObjectiveIds: ['lo_emotion_recognition'],
       completion: { type: 'user_submit' },
       safety: { allowsFreeTextInput: false },
       config: {
@@ -79,6 +105,7 @@ export const validQuest: QuestDefinition = {
     {
       id: 'scenario_001',
       kind: 'scenario-choice',
+      learningObjectiveIds: ['lo_help_seeking'],
       completion: { type: 'user_submit' },
       safety: { allowsFreeTextInput: false },
       config: {

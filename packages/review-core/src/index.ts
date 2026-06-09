@@ -118,6 +118,18 @@ export const ContentExpertReviewSchema = z.object({
 })
 
 const ReviewableJsonObjectSchema = z.record(z.unknown())
+const ReviewableLearningObjectiveSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  childFacingText: z.string().min(1),
+  selCompetencies: z.array(z.string().min(1)).min(1),
+  safe: z.object({
+    sequenced: z.boolean(),
+    active: z.boolean(),
+    focused: z.boolean(),
+    explicit: z.boolean()
+  })
+})
 
 export const ContentReviewPacketSchema = z.object({
   id: z.string().min(1),
@@ -133,7 +145,7 @@ export const ContentReviewPacketSchema = z.object({
     domain: z.string().min(1),
     ageBand: z.string().min(1),
     estimatedMinutes: z.number().int().positive(),
-    learningObjectives: z.array(z.string().min(1))
+    learningObjectives: z.array(ReviewableLearningObjectiveSchema)
   }),
   reviewableContent: z.object({
     title: z.string().min(1),
@@ -142,7 +154,7 @@ export const ContentReviewPacketSchema = z.object({
     domain: z.string().min(1),
     ageBand: z.string().min(1),
     estimatedMinutes: z.number().int().positive(),
-    learningObjectives: z.array(z.string().min(1)),
+    learningObjectives: z.array(ReviewableLearningObjectiveSchema),
     safety: ReviewableJsonObjectSchema,
     guardianSummary: ReviewableJsonObjectSchema,
     teacherGuide: ReviewableJsonObjectSchema.optional(),
@@ -188,7 +200,7 @@ export const ContentRevisionPacketSchema = z.object({
     title: z.string().min(1),
     status: z.string().min(1),
     ageBand: z.string().min(1),
-    learningObjectives: z.array(z.string().min(1))
+    learningObjectives: z.array(ReviewableLearningObjectiveSchema)
   }),
   validation: z.object({
     reportId: z.string().min(1),

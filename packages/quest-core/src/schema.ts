@@ -8,6 +8,29 @@ import {
 export const QuestStatusSchema = z.enum(['draft', 'published', 'archived'])
 export const AgeBandSchema = z.enum(['6-8', '8-10', '10-12', '12-15'])
 
+export const SelCompetencySchema = z.enum([
+  'self_awareness',
+  'self_management',
+  'social_awareness',
+  'relationship_skills',
+  'responsible_decision_making'
+])
+
+export const SafeLearningDesignSchema = z.object({
+  sequenced: z.boolean(),
+  active: z.boolean(),
+  focused: z.boolean(),
+  explicit: z.boolean()
+})
+
+export const LearningObjectiveSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  childFacingText: z.string().min(1),
+  selCompetencies: z.array(SelCompetencySchema).min(1),
+  safe: SafeLearningDesignSchema
+})
+
 export const DataSensitivitySchema = z.enum([
   'none',
   'low',
@@ -99,6 +122,7 @@ export const ActivityDefinitionSchema = z.object({
   id: z.string().min(1),
   kind: z.string().min(1),
   title: z.string().optional(),
+  learningObjectiveIds: z.array(z.string().min(1)).min(1),
   config: z.unknown(),
   completion: ActivityCompletionRuleSchema,
   safety: z
@@ -136,7 +160,7 @@ export const QuestDefinitionSchema = z.object({
   ]),
   ageBand: AgeBandSchema,
   estimatedMinutes: z.number().int().positive(),
-  learningObjectives: z.array(z.string().min(1)).min(1),
+  learningObjectives: z.array(LearningObjectiveSchema).min(1),
   safety: QuestSafetySchema,
   guardianSummary: z.object({
     title: z.string().min(1),

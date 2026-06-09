@@ -15,6 +15,28 @@ export type DataSensitivity =
 
 export type QuestStatus = 'draft' | 'published' | 'archived'
 
+export type SelCompetency =
+  | 'self_awareness'
+  | 'self_management'
+  | 'social_awareness'
+  | 'relationship_skills'
+  | 'responsible_decision_making'
+
+export interface SafeLearningDesign {
+  sequenced: boolean
+  active: boolean
+  focused: boolean
+  explicit: boolean
+}
+
+export interface LearningObjective {
+  id: string
+  title: string
+  childFacingText: string
+  selCompetencies: SelCompetency[]
+  safe: SafeLearningDesign
+}
+
 export interface QuestSafetyDefinition {
   dataSensitivity: DataSensitivity
   allowsFreeTextInput: boolean
@@ -116,6 +138,7 @@ export interface ActivityDefinition<TConfig = unknown> {
   id: string
   kind: ActivityKind
   title?: string
+  learningObjectiveIds: string[]
   config: TConfig
   completion: ActivityCompletionRule
   safety?: ActivitySafetyDefinition
@@ -150,7 +173,7 @@ export interface QuestDefinition {
   domain: QuestDomain
   ageBand: AgeBand
   estimatedMinutes: number
-  learningObjectives: string[]
+  learningObjectives: LearningObjective[]
   safety: QuestSafetyDefinition
   guardianSummary: GuardianSummary
   teacherGuide?: TeacherGuide

@@ -34,7 +34,7 @@ export function CompletionCard({ quest }: { quest: QuestDefinition }) {
       <p>{quest.guardianSummary.description}</p>
       <ul className="recap-list">
         {quest.learningObjectives.map((objective) => (
-          <li key={objective}>{objective}</li>
+          <li key={objective.id}>{objective.childFacingText}</li>
         ))}
       </ul>
     </section>

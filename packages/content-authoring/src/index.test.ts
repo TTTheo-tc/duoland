@@ -22,7 +22,20 @@ const quest: QuestDefinition = {
   domain: 'mental_health_education',
   ageBand: '8-10',
   estimatedMinutes: 10,
-  learningObjectives: ['Recognize feelings'],
+  learningObjectives: [
+    {
+      id: 'lo_emotion_recognition',
+      title: 'Recognize feelings',
+      childFacingText: 'I can name how a character may feel.',
+      selCompetencies: ['self_awareness'],
+      safe: {
+        sequenced: true,
+        active: true,
+        focused: true,
+        explicit: true
+      }
+    }
+  ],
   safety: {
     dataSensitivity: 'low',
     allowsFreeTextInput: false,

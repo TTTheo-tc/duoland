@@ -17,7 +17,20 @@ const mockQuest: QuestDefinition = {
   domain: 'sel',
   ageBand: '8-10',
   estimatedMinutes: 5,
-  learningObjectives: ['Practice one choice.'],
+  learningObjectives: [
+    {
+      id: 'lo_choice_practice',
+      title: 'Practice one choice',
+      childFacingText: 'I can practice one helpful choice.',
+      selCompetencies: ['responsible_decision_making'],
+      safe: {
+        sequenced: true,
+        active: true,
+        focused: true,
+        explicit: true
+      }
+    }
+  ],
   safety: {
     dataSensitivity: 'low',
     allowsFreeTextInput: false,
@@ -48,6 +61,7 @@ const mockQuest: QuestDefinition = {
     {
       id: 'dialogue_intro',
       kind: 'dialogue',
+      learningObjectiveIds: ['lo_choice_practice'],
       completion: { type: 'auto' },
       safety: { allowsFreeTextInput: false },
       config: {
@@ -77,6 +91,7 @@ describe('quest-core', () => {
         {
           id: 'dialogue_intro',
           kind: 'custom-reflection-card',
+          learningObjectiveIds: ['lo_choice_practice'],
           completion: { type: 'user_submit' },
           safety: { allowsFreeTextInput: false },
           config: {
@@ -119,6 +134,35 @@ describe('quest-core', () => {
     expect(() => validateQuestDefinition(brokenQuest)).toThrow(QuestValidationError)
   })
 
+  it('rejects duplicate learning objective ids', () => {
+    const brokenQuest = {
+      ...mockQuest,
+      learningObjectives: [
+        mockQuest.learningObjectives[0],
+        {
+          ...mockQuest.learningObjectives[0],
+          title: 'Duplicate objective'
+        }
+      ]
+    }
+
+    expect(() => validateQuestDefinition(brokenQuest)).toThrow(QuestValidationError)
+  })
+
+  it('rejects activities that reference unknown learning objectives', () => {
+    const brokenQuest = {
+      ...mockQuest,
+      activities: [
+        {
+          ...mockQuest.activities[0],
+          learningObjectiveIds: ['missing_objective']
+        }
+      ]
+    }
+
+    expect(() => validateQuestDefinition(brokenQuest)).toThrow(QuestValidationError)
+  })
+
   it('advances after activity completion', () => {
     const machine = createQuestMachine({ quest: mockQuest })
     const actor = createActor(machine).start()
@@ -155,6 +199,7 @@ describe('quest-core', () => {
         {
           id: 'breathing_001',
           kind: 'breathing',
+          learningObjectiveIds: ['lo_choice_practice'],
           completion: { type: 'time_elapsed', minSeconds: 8 },
           config: {
             instruction: 'Breathe slowly.',

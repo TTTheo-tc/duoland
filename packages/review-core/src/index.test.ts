@@ -6,6 +6,8 @@ import {
   getExpertReviewPublishabilityReasons,
   isExpertReviewPublishable,
   isContentReportPublishable,
+  validateContentReviewPacket,
+  validateContentRevisionPacket,
   validateContentExpertReview,
   validateContentValidationReport,
   type ContentExpertReview,
@@ -52,6 +54,19 @@ const approvedReview: ContentExpertReview = {
   notes: ['Approved for structured SEL preview content.'],
   requiredFollowUps: [],
   createdAt: '2026-06-09T00:00:00.000Z'
+}
+
+const reviewableLearningObjective = {
+  id: 'lo_emotion_recognition',
+  title: 'Recognize feelings',
+  childFacingText: 'I can name how a character may feel.',
+  selCompetencies: ['self_awareness'],
+  safe: {
+    sequenced: true,
+    active: true,
+    focused: true,
+    explicit: true
+  }
 }
 
 describe('review-core', () => {
@@ -121,6 +136,102 @@ describe('review-core', () => {
 
   it('validates an expert review', () => {
     expect(validateContentExpertReview(approvedReview)).toEqual(approvedReview)
+  })
+
+  it('requires structured learning objectives in review packets', () => {
+    const packet = {
+      id: 'packet_001',
+      contentItemId: 'emotion-detective',
+      contentVersion: '1.0.0',
+      contentHash: 'sha256_test0001',
+      generatedAt: '2026-06-09T00:00:00.000Z',
+      questSummary: {
+        slug: 'emotion-detective',
+        title: 'Emotion Detective',
+        description: 'Practice naming feelings.',
+        domain: 'mental_health_education',
+        ageBand: '8-10',
+        estimatedMinutes: 10,
+        learningObjectives: [reviewableLearningObjective]
+      },
+      reviewableContent: {
+        title: 'Emotion Detective',
+        description: 'Practice naming feelings.',
+        domain: 'mental_health_education',
+        ageBand: '8-10',
+        estimatedMinutes: 10,
+        learningObjectives: [reviewableLearningObjective],
+        safety: {},
+        guardianSummary: {},
+        stages: [],
+        activities: [],
+        assets: []
+      },
+      validation: {
+        reportId: baseReport.id,
+        status: baseReport.status,
+        summary: baseReport.summary,
+        issueCount: 0,
+        blockingIssueCount: 0,
+        issues: []
+      },
+      existingReviews: [],
+      reviewerChecklist: ['Check child-facing feedback.'],
+      reviewTemplate: approvedReview
+    }
+
+    expect(validateContentReviewPacket(packet).questSummary.learningObjectives).toEqual([
+      reviewableLearningObjective
+    ])
+    expect(() =>
+      validateContentReviewPacket({
+        ...packet,
+        questSummary: {
+          ...packet.questSummary,
+          learningObjectives: [{}]
+        }
+      })
+    ).toThrow()
+  })
+
+  it('requires structured learning objectives in revision packets', () => {
+    const packet = {
+      id: 'revision_packet_001',
+      contentItemId: 'emotion-detective',
+      contentVersion: '1.0.0',
+      contentHash: 'sha256_test0001',
+      generatedAt: '2026-06-09T00:00:00.000Z',
+      source: 'none',
+      questSummary: {
+        slug: 'emotion-detective',
+        title: 'Emotion Detective',
+        status: 'draft',
+        ageBand: '8-10',
+        learningObjectives: [reviewableLearningObjective]
+      },
+      validation: {
+        reportId: baseReport.id,
+        status: baseReport.status,
+        summary: baseReport.summary,
+        issues: []
+      },
+      expertFollowUps: [],
+      revisionTargetCount: 0,
+      refinementConstraints: ['Keep child-facing language safe.']
+    }
+
+    expect(validateContentRevisionPacket(packet).questSummary.learningObjectives).toEqual([
+      reviewableLearningObjective
+    ])
+    expect(() =>
+      validateContentRevisionPacket({
+        ...packet,
+        questSummary: {
+          ...packet.questSummary,
+          learningObjectives: [{}]
+        }
+      })
+    ).toThrow()
   })
 
   it('requires a matching expert approval for publishability', () => {
