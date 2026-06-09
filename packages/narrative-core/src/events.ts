@@ -1,4 +1,5 @@
 import type { NarrativeRuntimeState } from './types.ts'
+import { NarrativeRuntimeEventSchema } from './schema.ts'
 
 export interface NarrativeStateChangedEvent {
   type: 'NARRATIVE_STATE_CHANGED'
@@ -33,3 +34,9 @@ export type NarrativeRuntimeEvent =
   | NarrativeBeatCompletedEvent
   | NarrativeDialogueCompletedEvent
   | NarrativeCutsceneCompletedEvent
+
+export function validateNarrativeRuntimeEvent(
+  input: unknown
+): NarrativeRuntimeEvent {
+  return NarrativeRuntimeEventSchema.parse(input) as NarrativeRuntimeEvent
+}

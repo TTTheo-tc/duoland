@@ -7,6 +7,7 @@ import {
   transitionNarrativeBeat,
   validateNarrativeDefinition,
   validateNarrativeReferences,
+  validateNarrativeRuntimeEvent,
   validateNarrativeSemantics,
   type NarrativeDefinition,
   type NarrativeReferenceContext
@@ -273,5 +274,92 @@ describe('narrative-core', () => {
     expect(completedState.completedBeatIds).toEqual(['beat_opening_dialogue'])
     expect(transitionedState.currentBeatId).toBe('beat_emotion_choice')
     expect(flaggedState.flags.observed_xiaoyu).toBe(true)
+  })
+
+  it('validates narrative runtime events', () => {
+    const state = createInitialNarrativeState(narrative)
+
+    expect(
+      validateNarrativeRuntimeEvent({
+        type: 'NARRATIVE_STATE_CHANGED',
+        state
+      })
+    ).toEqual({
+      type: 'NARRATIVE_STATE_CHANGED',
+      state
+    })
+
+    expect(
+      validateNarrativeRuntimeEvent({
+        type: 'NARRATIVE_BEAT_ENTERED',
+        episodeId: 'episode_xiaoyu_drawing',
+        beatId: 'beat_opening_dialogue'
+      })
+    ).toEqual({
+      type: 'NARRATIVE_BEAT_ENTERED',
+      episodeId: 'episode_xiaoyu_drawing',
+      beatId: 'beat_opening_dialogue'
+    })
+
+    expect(
+      validateNarrativeRuntimeEvent({
+        type: 'NARRATIVE_BEAT_COMPLETED',
+        episodeId: 'episode_xiaoyu_drawing',
+        beatId: 'beat_opening_dialogue'
+      })
+    ).toEqual({
+      type: 'NARRATIVE_BEAT_COMPLETED',
+      episodeId: 'episode_xiaoyu_drawing',
+      beatId: 'beat_opening_dialogue'
+    })
+
+    expect(
+      validateNarrativeRuntimeEvent({
+        type: 'NARRATIVE_DIALOGUE_COMPLETED',
+        dialogueId: 'dialogue_xiaoyu_intro'
+      })
+    ).toEqual({
+      type: 'NARRATIVE_DIALOGUE_COMPLETED',
+      dialogueId: 'dialogue_xiaoyu_intro'
+    })
+
+    expect(
+      validateNarrativeRuntimeEvent({
+        type: 'NARRATIVE_CUTSCENE_COMPLETED',
+        cutsceneId: 'cutscene_xiaoyu_intro'
+      })
+    ).toEqual({
+      type: 'NARRATIVE_CUTSCENE_COMPLETED',
+      cutsceneId: 'cutscene_xiaoyu_intro'
+    })
+  })
+
+  it('rejects invalid narrative runtime events', () => {
+    const state = createInitialNarrativeState(narrative)
+
+    expect(() =>
+      validateNarrativeRuntimeEvent({
+        type: 'NARRATIVE_BEAT_COMPLETED',
+        episodeId: 'episode_xiaoyu_drawing',
+        beatId: ''
+      })
+    ).toThrow()
+
+    expect(() =>
+      validateNarrativeRuntimeEvent({
+        type: 'NARRATIVE_STATE_CHANGED',
+        state: {
+          ...state,
+          currentBeatId: ''
+        }
+      })
+    ).toThrow()
+
+    expect(() =>
+      validateNarrativeRuntimeEvent({
+        type: 'UNKNOWN_NARRATIVE_EVENT',
+        beatId: 'beat_opening_dialogue'
+      })
+    ).toThrow()
   })
 })
