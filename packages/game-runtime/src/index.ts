@@ -1,18 +1,34 @@
-export interface QuestRuntimePublicState {
+export interface RendererPublicQuestState {
   currentStageId?: string
   currentActivityId?: string
   completedStageIds: string[]
   completedActivityIds: string[]
+  flags: Record<string, boolean | string | number>
+}
+
+export type QuestRuntimePublicState = RendererPublicQuestState
+
+export interface QuestRendererEvent {
+  type:
+    | 'INTERACTABLE_CLICKED'
+    | 'MAP_NODE_CLICKED'
+    | 'MINI_GAME_COMPLETED'
+    | 'CUTSCENE_COMPLETED'
+    | 'WORLD_OBJECT_OBSERVED'
+  payload?: Record<string, unknown>
 }
 
 export interface GameBridgeToGameEvent {
   type: 'QUEST_STATE_CHANGED'
-  state: QuestRuntimePublicState
+  state: RendererPublicQuestState
 }
 
-export interface GameBridgeFromGameEvent {
-  type: 'NPC_CLICKED' | 'MAP_NODE_CLICKED' | 'MINI_GAME_COMPLETED'
-  payload?: Record<string, unknown>
+export type GameBridgeFromGameEvent = QuestRendererEvent
+
+export interface QuestRendererProps<TQuest> {
+  quest: TQuest
+  questState: RendererPublicQuestState
+  onRendererEvent?: (event: QuestRendererEvent) => void
 }
 
 type Listener<T> = (event: T) => void
@@ -39,5 +55,3 @@ export class GameBridge {
     return () => this.questListeners.delete(listener)
   }
 }
-
-export { PhaserCanvas } from './PhaserCanvas'

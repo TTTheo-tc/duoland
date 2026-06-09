@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import type { ActivityRegistry } from '@sel-quest/activities'
+import type { RendererPublicQuestState } from '@sel-quest/game-runtime'
 import type { QuestDefinition } from '@sel-quest/quest-core'
-import { PhaserCanvas } from '@sel-quest/game-runtime'
+import { PhaserCanvas } from '@sel-quest/renderer-phaser'
 import { childSafetyBoundaryText } from '@sel-quest/safety'
 import { ActivityHost } from './ActivityHost'
 import { QuestDebugPanel } from './QuestDebugPanel'
@@ -20,13 +21,39 @@ export function QuestPlayer({
 }) {
   const { loadProgress, persistSnapshot, resetProgress } = useQuestPersistence(quest)
   const { actor, snapshot, isReady } = useQuestRuntime(quest, loadProgress)
+  const context = snapshot?.context
+  const currentStageId = context?.currentStageId
+  const currentActivityId = context?.currentActivityId
+  const completedStageIds = context?.completedStageIds
+  const completedActivityIds = context?.completedActivityIds
+  const flags = context?.flags
+  const questState = useMemo<RendererPublicQuestState | null>(
+    () => {
+      if (!completedStageIds || !completedActivityIds || !flags) return null
+
+      return {
+        currentStageId,
+        currentActivityId,
+        completedStageIds,
+        completedActivityIds,
+        flags
+      }
+    },
+    [
+      completedActivityIds,
+      completedStageIds,
+      currentActivityId,
+      currentStageId,
+      flags
+    ]
+  )
 
   useEffect(() => {
     if (!snapshot) return
     persistSnapshot(snapshot)
   }, [persistSnapshot, snapshot])
 
-  if (!isReady || !actor || !snapshot) {
+  if (!isReady || !actor || !snapshot || !context || !questState) {
     return (
       <main className="quest-shell">
         <div className="loading-card">任务加载中...</div>
@@ -34,7 +61,6 @@ export function QuestPlayer({
     )
   }
 
-  const context = snapshot.context
   const currentStage = quest.stages.find((stage) => stage.id === context.currentStageId)
   const currentActivity = quest.activities.find(
     (activity) => activity.id === context.currentActivityId
@@ -67,8 +93,7 @@ export function QuestPlayer({
       <div className="quest-layout">
         <PhaserCanvas
           quest={quest}
-          currentStageId={context.currentStageId}
-          completedStageIds={context.completedStageIds}
+          questState={questState}
         />
         <section className="quest-workspace">
           <QuestProgress quest={quest} context={context} />

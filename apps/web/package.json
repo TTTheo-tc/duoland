@@ -13,6 +13,7 @@
     "@sel-quest/game-runtime": "0.1.0",
     "@sel-quest/persistence": "0.1.0",
     "@sel-quest/quest-core": "0.1.0",
+    "@sel-quest/renderer-phaser": "0.1.0",
     "@sel-quest/safety": "0.1.0",
     "next": "^15.3.3",
     "phaser": "^3.90.0",
