@@ -177,7 +177,10 @@ export const ContentReviewPacketSchema = z.object({
     teacherGuide: ReviewableJsonObjectSchema.optional(),
     stages: z.array(ReviewableJsonObjectSchema),
     activities: z.array(ReviewableJsonObjectSchema),
-    assets: z.array(ReviewableJsonObjectSchema)
+    assets: z.array(ReviewableJsonObjectSchema),
+    world: ReviewableJsonObjectSchema.optional(),
+    narrative: ReviewableJsonObjectSchema.optional(),
+    assetManifest: ReviewableJsonObjectSchema.optional()
   }),
   validation: z.object({
     reportId: z.string().min(1),

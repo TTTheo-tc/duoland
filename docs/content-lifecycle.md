@@ -40,7 +40,9 @@ Before a quest can be published, it needs:
 5. Low overall risk and appropriate age fit.
 6. Matching expert review evidence that satisfies the default review policy.
 7. At least two distinct approving reviewers are present.
-8. Required reviewer roles and review coverage sections are present.
+8. Required reviewer roles and review coverage sections are present. World,
+   narrative, and asset-backed content adds the corresponding review coverage
+   requirements.
 9. No required expert follow-ups.
 
 The current lifecycle commands support this process:
@@ -76,8 +78,5 @@ AI services must not:
 
 ## Future Extensions
 
-The next lifecycle extensions should be:
-
-1. Review coverage expansion for world narrative and asset representation when
-   published content uses those surfaces.
-2. Studio UI over the existing content lifecycle commands.
+The next lifecycle extension should be a Studio UI over the existing content
+lifecycle commands.

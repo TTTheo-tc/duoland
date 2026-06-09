@@ -2,15 +2,6 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { validateQuestDefinition } from '@sel-quest/quest-core'
 import {
-  assertWorldBindingReference,
-  validateWorldDefinition
-} from '@sel-quest/world-core'
-import {
-  assertAssetManifestReference,
-  assertWorldAssetReferences,
-  validateAssetManifest
-} from '@sel-quest/asset-pipeline'
-import {
   auditAuthoringEvidence,
   getAuthoringPublishabilityReasons
 } from '@sel-quest/content-authoring'
@@ -20,11 +11,13 @@ import {
 } from '@sel-quest/review-core'
 import {
   assertQuestDirectorySlug,
+  assertSupplementalContentEvidence,
   getQuestDir,
   getQuestSlugArg,
   getValidationReportDriftIssues,
   printValidationReportDrift,
-  readJsonIfExists
+  readJsonIfExists,
+  structuredErrorMessages
 } from './script-utils.mjs'
 
 const args = process.argv.slice(2)
@@ -37,6 +30,7 @@ const dryRun = args.includes('--dry-run') || args.includes('--check')
 const questDir = getQuestDir(slug)
 const questPath = path.join(questDir, 'quest.json')
 const worldPath = path.join(questDir, 'world.json')
+const narrativePath = path.join(questDir, 'narrative.json')
 const assetManifestPath = path.join(questDir, 'asset-manifest.json')
 const reportPath = path.join(questDir, 'validation-report.json')
 const reviewsPath = path.join(questDir, 'expert-reviews.json')
@@ -50,7 +44,12 @@ const expertReviews = JSON.parse(await readFile(reviewsPath, 'utf8')).map((revie
   validateContentExpertReview(review)
 )
 const worldJson = await readJsonIfExists(worldPath)
+const narrativeJson = await readJsonIfExists(narrativePath)
 const assetManifestJson = await readJsonIfExists(assetManifestPath)
+const reviewSurface = {
+  usesWorldNarrative: Boolean(worldJson || narrativeJson),
+  usesAssetRepresentation: Boolean(assetManifestJson)
+}
 
 if (quest.status === 'archived') {
   console.error(`${slug}: archived content cannot be published`)
@@ -58,9 +57,14 @@ if (quest.status === 'archived') {
 }
 
 try {
-  assertAssetEvidence(quest, worldJson, assetManifestJson)
+  assertSupplementalContentEvidence(
+    quest,
+    worldJson,
+    narrativeJson,
+    assetManifestJson
+  )
 } catch (error) {
-  console.error(`${slug}: asset evidence audit failed`)
+  console.error(`${slug}: content evidence audit failed`)
   printStructuredError(error)
   process.exit(1)
 }
@@ -68,7 +72,8 @@ try {
 const evidenceIssues = auditAuthoringEvidence({
   quest,
   validationReport,
-  expertReviews
+  expertReviews,
+  reviewSurface
 })
 
 if (evidenceIssues.length > 0) {
@@ -93,7 +98,8 @@ const publishCandidate = {
 const publishabilityReasons = getAuthoringPublishabilityReasons({
   quest: publishCandidate,
   validationReport,
-  expertReviews
+  expertReviews,
+  reviewSurface
 })
 
 if (publishabilityReasons.length > 0) {
@@ -112,40 +118,8 @@ if (dryRun) {
   console.log(`${slug}: published`)
 }
 
-function assertAssetEvidence(quest, worldJson, assetManifestJson) {
-  const world = worldJson ? validateWorldDefinition(worldJson) : null
-
-  if (quest.worldBinding && !world) {
-    throw new Error('quest declares worldBinding without world.json')
-  }
-
-  if (quest.worldBinding && world) {
-    assertWorldBindingReference(quest.worldBinding, world)
-  }
-
-  if (world?.assetManifestId && !assetManifestJson) {
-    throw new Error('world declares assetManifestId without asset-manifest.json')
-  }
-
-  if (!world?.assetManifestId && !assetManifestJson) return
-
-  if (!world?.assetManifestId && assetManifestJson) {
-    throw new Error('asset-manifest.json exists but world.json has no assetManifestId')
-  }
-
-  const assetManifest = validateAssetManifest(assetManifestJson)
-  assertAssetManifestReference(assetManifest, world.assetManifestId)
-  assertWorldAssetReferences(world, assetManifest)
-}
-
 function printStructuredError(error) {
-  if (Array.isArray(error?.issues)) {
-    for (const issue of error.issues) {
-      const severity = issue.severity ?? 'schema'
-      const path = Array.isArray(issue.path) ? issue.path.join('.') : issue.path
-      console.error(`- ${severity}: ${issue.code} at ${path}`)
-    }
-  } else {
-    console.error(`- ${error?.message ?? String(error)}`)
+  for (const message of structuredErrorMessages(error)) {
+    console.error(`- ${message}`)
   }
 }

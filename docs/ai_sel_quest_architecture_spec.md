@@ -382,6 +382,7 @@ At least two matching ContentExpertReview records have decision 'approved'
 Approved reviews come from at least two distinct reviewers
 Approved reviews include school_mental_health_teacher and safety_reviewer roles
 Approved reviews cover child_content, guardian_summary, teacher_guide, safety_policy, and activity_feedback
+World, narrative, or asset-backed content additionally requires world_narrative and/or asset_representation coverage
 Approved ContentExpertReview.contentHash === hash(reviewable QuestDefinition content)
 No matching ContentExpertReview has required follow-ups
 ```

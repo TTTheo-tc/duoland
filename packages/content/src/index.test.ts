@@ -147,7 +147,9 @@ describe('content package publishability gates', () => {
       'missing review coverage section guardian_summary',
       'missing review coverage section teacher_guide',
       'missing review coverage section safety_policy',
-      'missing review coverage section activity_feedback'
+      'missing review coverage section activity_feedback',
+      'missing review coverage section world_narrative',
+      'missing review coverage section asset_representation'
     ])
   })
 
@@ -165,7 +167,9 @@ describe('content package publishability gates', () => {
       'missing review coverage section guardian_summary',
       'missing review coverage section teacher_guide',
       'missing review coverage section safety_policy',
-      'missing review coverage section activity_feedback'
+      'missing review coverage section activity_feedback',
+      'missing review coverage section world_narrative',
+      'missing review coverage section asset_representation'
     ])
     expect(() => assertQuestPublishable('emotion-detective')).toThrow()
   })

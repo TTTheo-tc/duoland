@@ -11,9 +11,11 @@ import {
 } from '@sel-quest/review-core'
 import {
   assertQuestDirectorySlug,
+  assertSupplementalContentEvidence,
   getRequestedQuestDirs,
   getValidationReportDriftIssues,
-  readJsonIfExists
+  readJsonIfExists,
+  structuredErrorMessages
 } from './script-utils.mjs'
 
 const args = process.argv.slice(2)
@@ -60,15 +62,34 @@ async function readAuthoringStatus(slug, questDir) {
   const expertReviews = await readExpertReviews(
     path.join(questDir, 'expert-reviews.json')
   )
+  const worldJson = await readJsonIfExists(path.join(questDir, 'world.json'))
+  const narrativeJson = await readJsonIfExists(
+    path.join(questDir, 'narrative.json')
+  )
+  const assetManifestJson = await readJsonIfExists(
+    path.join(questDir, 'asset-manifest.json')
+  )
+  const reviewSurface = {
+    usesWorldNarrative: Boolean(worldJson || narrativeJson),
+    usesAssetRepresentation: Boolean(assetManifestJson)
+  }
+  const supplementalEvidenceIssues = getSupplementalEvidenceIssues({
+    quest,
+    worldJson,
+    narrativeJson,
+    assetManifestJson
+  })
   const snapshot = createAuthoringSnapshot({
     quest,
     validationReport,
-    expertReviews
+    expertReviews,
+    reviewSurface
   })
   const evidenceIssues = auditAuthoringEvidence({
     quest,
     validationReport,
-    expertReviews
+    expertReviews,
+    reviewSurface
   })
   const validationDriftIssues = validationReport
     ? getValidationReportDriftIssues(quest, validationReport)
@@ -80,17 +101,47 @@ async function readAuthoringStatus(slug, questDir) {
     contentVersion: snapshot.contentVersion,
     contentHash: snapshot.contentHash,
     questStatus: quest.status,
-    authoringState: snapshot.state,
+    authoringState:
+      supplementalEvidenceIssues.length > 0
+        ? 'auto_validation_failed'
+        : snapshot.state,
     validationStatus: validationReport?.status ?? null,
     safetyDecision: validationReport?.summary.safetyDecision ?? null,
     expertReviewCount: expertReviews.length,
-    publishabilityReasons: snapshot.publishabilityReasons,
+    publishabilityReasons:
+      supplementalEvidenceIssues.length > 0
+        ? [
+            ...snapshot.publishabilityReasons,
+            'supplemental content evidence is invalid'
+          ]
+        : snapshot.publishabilityReasons,
     validationDriftIssues,
-    evidenceIssues: evidenceIssues.map((issue) => ({
-      severity: issue.severity,
-      code: issue.code,
-      message: issue.message,
-      evidenceId: issue.evidenceId
+    evidenceIssues: [
+      ...evidenceIssues.map((issue) => ({
+        severity: issue.severity,
+        code: issue.code,
+        message: issue.message,
+        evidenceId: issue.evidenceId
+      })),
+      ...supplementalEvidenceIssues
+    ]
+  }
+}
+
+function getSupplementalEvidenceIssues(input) {
+  try {
+    assertSupplementalContentEvidence(
+      input.quest,
+      input.worldJson,
+      input.narrativeJson,
+      input.assetManifestJson
+    )
+    return []
+  } catch (error) {
+    return structuredErrorMessages(error).map((message) => ({
+      severity: 'error',
+      code: 'supplemental_content_evidence_invalid',
+      message
     }))
   }
 }

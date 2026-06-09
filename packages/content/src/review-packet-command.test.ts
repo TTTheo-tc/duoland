@@ -4,7 +4,10 @@ import { validateContentReviewPacket } from '@sel-quest/review-core'
 import { describe, expect, it } from 'vitest'
 import {
   runContentScript,
+  validAssetManifest,
+  validNarrative,
   validQuest,
+  validWorld,
   writeQuestFixture
 } from './test-fixtures'
 
@@ -53,10 +56,47 @@ describe('content review packet command', () => {
       'Practice emotion recognition and help-seeking.'
     )
     expect(packet.reviewableContent.assets).toEqual(questWithAsset.assets)
+    expect(packet.reviewableContent.world).toBeUndefined()
+    expect(packet.reviewableContent.narrative).toBeUndefined()
+    expect(packet.reviewableContent.assetManifest).toBeUndefined()
     expect(packet.existingReviews).toEqual([])
     expect(packet.reviewTemplate.decision).toBe('changes_requested')
     expect(packet.reviewTemplate.reviewCoverage.reviewedSections).toEqual([])
     expect(packet.reviewTemplate.requiredFollowUps.length).toBeGreaterThan(0)
+  })
+
+  it('includes world, narrative, and asset manifest surfaces when present', async () => {
+    const quest = {
+      ...validQuest,
+      worldBinding: {
+        worldId: 'test-world',
+        entrySceneId: 'test_scene'
+      },
+      episodeIds: ['episode_test']
+    }
+    const { questsRoot } = await writeQuestFixture({
+      quest,
+      world: validWorld,
+      narrative: validNarrative,
+      assetManifest: validAssetManifest
+    })
+
+    const result = await runContentScript({
+      scriptName: 'write-review-packet.mjs',
+      args: ['test-quest'],
+      questsRoot,
+      env: { CONTENT_REVIEW_PACKET_NOW: '2026-06-09T00:00:00.000Z' }
+    })
+    const packet = validateContentReviewPacket(JSON.parse(result.stdout))
+
+    expect(result.exitCode).toBe(0)
+    expect(packet.reviewableContent.world?.id).toBe('test-world')
+    expect(packet.reviewableContent.narrative?.id).toBe('test-narrative')
+    expect(packet.reviewableContent.assetManifest?.id).toBe(
+      'assets_test_world_0_1_0'
+    )
+    expect(packet.reviewerChecklist.join('\n')).toContain('world_narrative')
+    expect(packet.reviewerChecklist.join('\n')).toContain('asset_representation')
   })
 
   it('writes the review packet to an explicit output path', async () => {

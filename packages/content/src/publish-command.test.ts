@@ -4,11 +4,12 @@ import { describe, expect, it } from 'vitest'
 import {
   createRequiredApprovedReviews,
   runContentScript,
+  validAssetManifest,
+  validNarrative,
   validQuest,
+  validWorld,
   writeQuestFixture
 } from './test-fixtures'
-import type { AssetManifest } from '@sel-quest/asset-pipeline'
-import type { WorldDefinition } from '@sel-quest/world-core'
 
 describe('content publish command', () => {
   it('blocks content without a matching expert approval', async () => {
@@ -50,6 +51,55 @@ describe('content publish command', () => {
     expect(result.exitCode).toBe(0)
     expect(result.stdout).toContain('test-quest: published')
     expect(quest.status).toBe('published')
+  })
+
+  it('publishes world-bound content only with world and asset review coverage', async () => {
+    const worldBoundQuest = {
+      ...validQuest,
+      worldBinding: {
+        worldId: 'test-world',
+        entrySceneId: 'test_scene'
+      }
+    }
+    const { questsRoot } = await writeQuestFixture({
+      quest: worldBoundQuest,
+      expertReviews: createRequiredApprovedReviews(worldBoundQuest, {
+        extraReviewedSections: ['world_narrative', 'asset_representation']
+      }),
+      world: validWorld,
+      assetManifest: validAssetManifest
+    })
+
+    const result = await runPublish(questsRoot, ['test-quest', '--dry-run'])
+
+    expect(result.exitCode).toBe(0)
+    expect(result.stdout).toContain('test-quest: publishable')
+  })
+
+  it('blocks world-bound content without world and asset review coverage', async () => {
+    const worldBoundQuest = {
+      ...validQuest,
+      worldBinding: {
+        worldId: 'test-world',
+        entrySceneId: 'test_scene'
+      }
+    }
+    const { questsRoot } = await writeQuestFixture({
+      quest: worldBoundQuest,
+      expertReviews: createRequiredApprovedReviews(worldBoundQuest),
+      world: validWorld,
+      assetManifest: validAssetManifest
+    })
+
+    const result = await runPublish(questsRoot, ['test-quest', '--dry-run'])
+
+    expect(result.exitCode).not.toBe(0)
+    expect(result.stderr).toContain(
+      'missing review coverage section world_narrative'
+    )
+    expect(result.stderr).toContain(
+      'missing review coverage section asset_representation'
+    )
   })
 
   it('blocks publish when validation report content drifts without a hash change', async () => {
@@ -99,7 +149,7 @@ describe('content publish command', () => {
     const result = await runPublish(questsRoot, ['test-quest'])
 
     expect(result.exitCode).not.toBe(0)
-    expect(result.stderr).toContain('asset evidence audit failed')
+    expect(result.stderr).toContain('content evidence audit failed')
     expect(result.stderr).toContain('worldBinding without world.json')
   })
 
@@ -121,7 +171,7 @@ describe('content publish command', () => {
     const result = await runPublish(questsRoot, ['test-quest'])
 
     expect(result.exitCode).not.toBe(0)
-    expect(result.stderr).toContain('asset evidence audit failed')
+    expect(result.stderr).toContain('content evidence audit failed')
     expect(result.stderr).toContain('unknown_world_id')
   })
 
@@ -135,7 +185,7 @@ describe('content publish command', () => {
     const result = await runPublish(questsRoot, ['test-quest'])
 
     expect(result.exitCode).not.toBe(0)
-    expect(result.stderr).toContain('asset evidence audit failed')
+    expect(result.stderr).toContain('content evidence audit failed')
     expect(result.stderr).toContain('assetManifestId without asset-manifest.json')
   })
 
@@ -161,8 +211,45 @@ describe('content publish command', () => {
     const result = await runPublish(questsRoot, ['test-quest'])
 
     expect(result.exitCode).not.toBe(0)
-    expect(result.stderr).toContain('asset evidence audit failed')
+    expect(result.stderr).toContain('content evidence audit failed')
     expect(result.stderr).toContain('unknown_world_asset_id')
+  })
+
+  it('blocks publish when narrative references drift', async () => {
+    const narrativeQuest = {
+      ...validQuest,
+      episodeIds: ['episode_test']
+    }
+    const { questsRoot } = await writeQuestFixture({
+      quest: narrativeQuest,
+      expertReviews: createRequiredApprovedReviews(narrativeQuest, {
+        extraReviewedSections: ['world_narrative', 'asset_representation']
+      }),
+      world: validWorld,
+      assetManifest: validAssetManifest,
+      narrative: {
+        ...validNarrative,
+        episodes: [
+          {
+            ...validNarrative.episodes[0],
+            beats: [
+              {
+                id: 'beat_missing_activity',
+                kind: 'activity',
+                activityId: 'missing_activity',
+                learningObjectiveIds: ['lo_emotion_recognition']
+              }
+            ]
+          }
+        ]
+      }
+    })
+
+    const result = await runPublish(questsRoot, ['test-quest', '--dry-run'])
+
+    expect(result.exitCode).not.toBe(0)
+    expect(result.stderr).toContain('content evidence audit failed')
+    expect(result.stderr).toContain('unknown_beat_activity_id')
   })
 })
 
@@ -172,102 +259,4 @@ async function runPublish(questsRoot: string, args: string[]) {
     args,
     questsRoot
   })
-}
-
-const validWorld: WorldDefinition = {
-  id: 'test-world',
-  version: '0.1.0',
-  title: 'Test World',
-  artDirection: {
-    style: 'storybook_3d',
-    mood: ['warm']
-  },
-  assetManifestId: 'assets_test_world_0_1_0',
-  zones: [
-    {
-      id: 'test_zone',
-      title: 'Test Zone',
-      theme: 'emotion_harbor',
-      sceneIds: ['test_scene']
-    }
-  ],
-  scenes: [
-    {
-      id: 'test_scene',
-      zoneId: 'test_zone',
-      title: 'Test Scene',
-      characterPlacements: [
-        {
-          characterId: 'test_character',
-          position: [0, 0, 0],
-          initialAnimation: 'idle'
-        }
-      ],
-      interactableIds: []
-    }
-  ],
-  characters: [
-    {
-      id: 'test_character',
-      name: 'Test Character',
-      role: 'child_peer',
-      personalityTags: ['quiet'],
-      asset: {
-        modelAssetId: 'model_test_character',
-        animationSetId: 'anim_test_character'
-      },
-      safetyProfile: {
-        neverActsAsTherapist: true,
-        canDiscussSensitiveTopics: false
-      },
-      dialogueStyle: {
-        ageBand: '8-10',
-        tone: 'warm',
-        maxSentenceLength: 'short'
-      }
-    }
-  ],
-  interactables: []
-}
-
-const validAssetManifest: AssetManifest = {
-  id: 'assets_test_world_0_1_0',
-  version: '0.1.0',
-  title: 'Test World Assets',
-  performanceBudget: {
-    maxInitialDownloadMb: 5,
-    maxTrianglesPerScene: 12000,
-    maxTextureSize: 1024,
-    mobileTargetFps: 30
-  },
-  assets: [
-    {
-      id: 'model_test_character',
-      kind: 'model',
-      status: 'placeholder',
-      label: 'Test Character Model',
-      format: 'glb',
-      triangleCount: 800,
-      animationAssetIds: ['anim_test_character'],
-      requiredAnimationClipIds: ['idle'],
-      license: {
-        owner: 'Duoland',
-        source: 'internal placeholder',
-        commercialUseAllowed: true
-      }
-    },
-    {
-      id: 'anim_test_character',
-      kind: 'animation',
-      status: 'placeholder',
-      label: 'Test Character Animation',
-      format: 'json',
-      clipIds: ['idle'],
-      license: {
-        owner: 'Duoland',
-        source: 'internal placeholder',
-        commercialUseAllowed: true
-      }
-    }
-  ]
 }

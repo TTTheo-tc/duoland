@@ -6,8 +6,12 @@ import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 import { validateSelQuestContent } from '@sel-quest/content-validation'
 import type { QuestDefinition } from '@sel-quest/quest-core'
-import type { ContentExpertReview } from '@sel-quest/review-core'
+import type {
+  ContentExpertReview,
+  ReviewCoverageSection
+} from '@sel-quest/review-core'
 import type { AssetManifest } from '@sel-quest/asset-pipeline'
+import type { NarrativeDefinition } from '@sel-quest/narrative-core'
 import type { WorldDefinition } from '@sel-quest/world-core'
 
 const execFileAsync = promisify(execFile)
@@ -127,11 +131,137 @@ export const validQuest: QuestDefinition = {
   assets: []
 }
 
+export const validWorld: WorldDefinition = {
+  id: 'test-world',
+  version: '0.1.0',
+  title: 'Test World',
+  artDirection: {
+    style: 'storybook_3d',
+    mood: ['warm']
+  },
+  assetManifestId: 'assets_test_world_0_1_0',
+  zones: [
+    {
+      id: 'test_zone',
+      title: 'Test Zone',
+      theme: 'emotion_harbor',
+      sceneIds: ['test_scene']
+    }
+  ],
+  scenes: [
+    {
+      id: 'test_scene',
+      zoneId: 'test_zone',
+      title: 'Test Scene',
+      characterPlacements: [
+        {
+          characterId: 'test_character',
+          position: [0, 0, 0],
+          initialAnimation: 'idle'
+        }
+      ],
+      interactableIds: []
+    }
+  ],
+  characters: [
+    {
+      id: 'test_character',
+      name: 'Test Character',
+      role: 'child_peer',
+      personalityTags: ['quiet'],
+      asset: {
+        modelAssetId: 'model_test_character',
+        animationSetId: 'anim_test_character'
+      },
+      safetyProfile: {
+        neverActsAsTherapist: true,
+        canDiscussSensitiveTopics: false
+      },
+      dialogueStyle: {
+        ageBand: '8-10',
+        tone: 'warm',
+        maxSentenceLength: 'short'
+      }
+    }
+  ],
+  interactables: []
+}
+
+export const validAssetManifest: AssetManifest = {
+  id: 'assets_test_world_0_1_0',
+  version: '0.1.0',
+  title: 'Test World Assets',
+  performanceBudget: {
+    maxInitialDownloadMb: 5,
+    maxTrianglesPerScene: 12000,
+    maxTextureSize: 1024,
+    mobileTargetFps: 30
+  },
+  assets: [
+    {
+      id: 'model_test_character',
+      kind: 'model',
+      status: 'placeholder',
+      label: 'Test Character Model',
+      format: 'glb',
+      triangleCount: 800,
+      animationAssetIds: ['anim_test_character'],
+      requiredAnimationClipIds: ['idle'],
+      license: {
+        owner: 'Duoland',
+        source: 'internal placeholder',
+        commercialUseAllowed: true
+      }
+    },
+    {
+      id: 'anim_test_character',
+      kind: 'animation',
+      status: 'placeholder',
+      label: 'Test Character Animation',
+      format: 'json',
+      clipIds: ['idle'],
+      license: {
+        owner: 'Duoland',
+        source: 'internal placeholder',
+        commercialUseAllowed: true
+      }
+    }
+  ]
+}
+
+export const validNarrative: NarrativeDefinition = {
+  id: 'test-narrative',
+  questId: 'test-quest',
+  version: '0.1.0',
+  episodes: [
+    {
+      id: 'episode_test',
+      questId: 'test-quest',
+      title: 'Test Episode',
+      summary: 'A short test episode.',
+      worldZoneId: 'test_zone',
+      entrySceneId: 'test_scene',
+      learningObjectiveIds: ['lo_emotion_recognition'],
+      beats: [
+        {
+          id: 'beat_emotion',
+          kind: 'activity',
+          activityId: 'emotion_001',
+          learningObjectiveIds: ['lo_emotion_recognition']
+        }
+      ]
+    }
+  ],
+  dialogues: [],
+  cutscenes: []
+}
+
 export async function writeQuestFixture(input: {
   quest: QuestDefinition
   validationQuest?: QuestDefinition
   expertReviews?: ContentExpertReview[]
   world?: WorldDefinition
+  narrative?: NarrativeDefinition
   assetManifest?: AssetManifest
 }) {
   const questsRoot = await mkdtemp(path.join(os.tmpdir(), 'sel-quest-content-'))
@@ -161,6 +291,12 @@ export async function writeQuestFixture(input: {
       `${JSON.stringify(input.world, null, 2)}\n`
     )
   }
+  if (input.narrative) {
+    await writeFile(
+      path.join(questDir, 'narrative.json'),
+      `${JSON.stringify(input.narrative, null, 2)}\n`
+    )
+  }
   if (input.assetManifest) {
     await writeFile(
       path.join(questDir, 'asset-manifest.json'),
@@ -171,11 +307,24 @@ export async function writeQuestFixture(input: {
   return { questsRoot, validationReport }
 }
 
-export function createApprovedReview(quest: QuestDefinition): ContentExpertReview {
+export function createApprovedReview(
+  quest: QuestDefinition,
+  options: { extraReviewedSections?: ReviewCoverageSection[] } = {}
+): ContentExpertReview {
   const validationReport = validateSelQuestContent(quest, {
     now: () => '2026-06-09T00:00:00.000Z',
     reportId: `report_${quest.id}_${quest.version}_rules`
   })
+  const reviewedSections = [
+    ...new Set<ReviewCoverageSection>([
+      'child_content',
+      'guardian_summary',
+      'teacher_guide',
+      'safety_policy',
+      'activity_feedback',
+      ...(options.extraReviewedSections ?? [])
+    ])
+  ]
 
   return {
     id: `review_${quest.id}_${quest.version}_expert_001`,
@@ -189,13 +338,7 @@ export function createApprovedReview(quest: QuestDefinition): ContentExpertRevie
     decision: 'approved',
     reviewedIssueIds: [],
     reviewCoverage: {
-      reviewedSections: [
-        'child_content',
-        'guardian_summary',
-        'teacher_guide',
-        'safety_policy',
-        'activity_feedback'
-      ]
+      reviewedSections
     },
     notes: ['Approved for structured SEL content.'],
     requiredFollowUps: [],
@@ -204,9 +347,10 @@ export function createApprovedReview(quest: QuestDefinition): ContentExpertRevie
 }
 
 export function createRequiredApprovedReviews(
-  quest: QuestDefinition
+  quest: QuestDefinition,
+  options: { extraReviewedSections?: ReviewCoverageSection[] } = {}
 ): ContentExpertReview[] {
-  const baseReview = createApprovedReview(quest)
+  const baseReview = createApprovedReview(quest, options)
 
   return [
     {

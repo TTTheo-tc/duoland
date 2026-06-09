@@ -9,6 +9,7 @@ import {
   auditAuthoringEvidence,
   createAuthoringSnapshot,
   deriveAuthoringState,
+  createContentReviewPolicy,
   getAuthoringPublishabilityReasons
 } from './index'
 
@@ -223,6 +224,50 @@ describe('content-authoring', () => {
         expertReviews: requiredApprovalReviews
       })
     ).toBe('published')
+  })
+
+  it('adds review coverage requirements for world and asset surfaces', () => {
+    expect(
+      createContentReviewPolicy({
+        usesWorldNarrative: true,
+        usesAssetRepresentation: true
+      }).requiredCoverageSections
+    ).toEqual([
+      'child_content',
+      'guardian_summary',
+      'teacher_guide',
+      'safety_policy',
+      'activity_feedback',
+      'world_narrative',
+      'asset_representation'
+    ])
+
+    expect(
+      deriveAuthoringState({
+        quest,
+        validationReport: passedReport,
+        expertReviews: requiredApprovalReviews,
+        reviewSurface: {
+          usesWorldNarrative: true,
+          usesAssetRepresentation: true
+        }
+      })
+    ).toBe('needs_expert_review')
+
+    expect(
+      getAuthoringPublishabilityReasons({
+        quest: { ...quest, status: 'published' },
+        validationReport: passedReport,
+        expertReviews: requiredApprovalReviews,
+        reviewSurface: {
+          usesWorldNarrative: true,
+          usesAssetRepresentation: true
+        }
+      })
+    ).toEqual([
+      'missing review coverage section world_narrative',
+      'missing review coverage section asset_representation'
+    ])
   })
 
   it('returns a compact authoring snapshot with publishability reasons', () => {

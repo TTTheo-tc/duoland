@@ -3,6 +3,19 @@ import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { validateSelQuestContent } from '@sel-quest/content-validation'
+import {
+  assertAssetManifestReference,
+  assertWorldAssetReferences,
+  validateAssetManifest
+} from '@sel-quest/asset-pipeline'
+import {
+  assertNarrativeReferences,
+  validateNarrativeDefinition
+} from '@sel-quest/narrative-core'
+import {
+  assertWorldBindingReference,
+  validateWorldDefinition
+} from '@sel-quest/world-core'
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url))
 const contentRoot = path.resolve(scriptDir, '..')
@@ -131,6 +144,70 @@ export function getBlockingIssueCount(report) {
 export function normalizeJson(value) {
   if (value === undefined) return undefined
   return JSON.parse(JSON.stringify(value))
+}
+
+export function assertSupplementalContentEvidence(
+  quest,
+  worldJson,
+  narrativeJson,
+  assetManifestJson
+) {
+  const world = worldJson ? validateWorldDefinition(worldJson) : null
+  const narrative = narrativeJson ? validateNarrativeDefinition(narrativeJson) : null
+
+  if (quest.worldBinding && !world) {
+    throw new Error('quest declares worldBinding without world.json')
+  }
+
+  if (quest.worldBinding && world) {
+    assertWorldBindingReference(quest.worldBinding, world)
+  }
+
+  if (world?.assetManifestId && !assetManifestJson) {
+    throw new Error('world declares assetManifestId without asset-manifest.json')
+  }
+
+  if (!world?.assetManifestId && assetManifestJson) {
+    throw new Error('asset-manifest.json exists but world.json has no assetManifestId')
+  }
+
+  if (world?.assetManifestId && assetManifestJson) {
+    const assetManifest = validateAssetManifest(assetManifestJson)
+    assertAssetManifestReference(assetManifest, world.assetManifestId)
+    assertWorldAssetReferences(world, assetManifest)
+  }
+
+  if (quest.episodeIds?.length && !narrative) {
+    throw new Error('quest declares episodeIds without narrative.json')
+  }
+
+  if (!narrative) return
+
+  assertNarrativeReferences(narrative, {
+    questId: quest.id,
+    episodeIds: quest.episodeIds,
+    activityIds: quest.activities.map((activity) => activity.id),
+    learningObjectiveIds: quest.learningObjectives.map(
+      (objective) => objective.id
+    ),
+    worldZoneIds: world?.zones.map((zone) => zone.id) ?? [],
+    sceneIds: world?.scenes.map((scene) => scene.id) ?? [],
+    interactableIds:
+      world?.interactables.map((interactable) => interactable.id) ?? [],
+    characterIds: world?.characters.map((character) => character.id) ?? []
+  })
+}
+
+export function structuredErrorMessages(error) {
+  if (Array.isArray(error?.issues)) {
+    return error.issues.map((issue) => {
+      const severity = issue.severity ?? 'schema'
+      const path = Array.isArray(issue.path) ? issue.path.join('.') : issue.path
+      return `${severity}: ${issue.code} at ${path}`
+    })
+  }
+
+  return [error?.message ?? String(error)]
 }
 
 function toDeterministicBaselineProjection(report, baselineValidator) {

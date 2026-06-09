@@ -2,7 +2,8 @@ import {
   auditAuthoringEvidence,
   createAuthoringSnapshot,
   getAuthoringPublishabilityReasons,
-  type AuthoringEvidenceIssue
+  type AuthoringEvidenceIssue,
+  type AuthoringReviewSurfaceInput
 } from '@sel-quest/content-authoring'
 import {
   ContentPublishabilityError
@@ -51,7 +52,8 @@ export function getQuestAuthoringSnapshot(slug: string) {
   return createAuthoringSnapshot({
     quest: entry.quest,
     validationReport: entry.validationReport,
-    expertReviews: entry.expertReviews
+    expertReviews: entry.expertReviews,
+    reviewSurface: getQuestReviewSurface(entry)
   })
 }
 
@@ -73,7 +75,8 @@ export function getQuestPublishabilityReasons(slug: string) {
   return getAuthoringPublishabilityReasons({
     quest: entry.quest,
     validationReport: entry.validationReport,
-    expertReviews: entry.expertReviews
+    expertReviews: entry.expertReviews,
+    reviewSurface: getQuestReviewSurface(entry)
   })
 }
 
@@ -82,9 +85,21 @@ export function auditContentEvidence(): AuthoringEvidenceIssue[] {
     auditAuthoringEvidence({
       quest: entry.quest,
       validationReport: entry.validationReport,
-      expertReviews: entry.expertReviews
+      expertReviews: entry.expertReviews,
+      reviewSurface: getQuestReviewSurface(entry)
     })
   )
+}
+
+function getQuestReviewSurface(entry: {
+  world?: unknown
+  narrative?: unknown
+  assetManifest?: unknown
+}): AuthoringReviewSurfaceInput {
+  return {
+    usesWorldNarrative: Boolean(entry.world || entry.narrative),
+    usesAssetRepresentation: Boolean(entry.assetManifest)
+  }
 }
 
 export class ContentEvidenceAuditError extends Error {
