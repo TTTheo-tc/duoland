@@ -29,6 +29,11 @@ Studio workflows.
 The public runtime must only expose publishable content. Preview routes may load
 draft content for development and expert review.
 
+The current authoring dashboard lives in `apps/studio`. It is intentionally
+read-only: it renders authoring summaries, validation state, review coverage,
+and publishability blockers. Publishing and review recording still go through
+the content lifecycle commands.
+
 ## Required Evidence
 
 Before a quest can be published, it needs:
@@ -76,7 +81,22 @@ AI services must not:
 - Replace expert review.
 - Decide that its own revision is safe.
 
-## Future Extensions
+The current `ai-runtime` package is a boundary layer, not a model integration.
+It keeps the default adapter disabled, requires authoring-only prompt policies,
+stores prompt and output hashes instead of raw text, and marks AI artifacts as
+candidates that still require validation and expert review.
 
-The next lifecycle extension should be a Studio UI over the existing content
-lifecycle commands.
+## Local Verification
+
+Use these commands for the current lifecycle and app split:
+
+```bash
+npm run check
+npm run test:smoke
+npm run test:smoke:studio
+npm run test:smoke:all
+```
+
+`npm run validate:boundaries` is part of `npm run check`. It currently prevents
+AI runtime imports from entering the child runtime and keeps the Studio shell
+separate from child renderers and runtime persistence.
