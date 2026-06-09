@@ -134,6 +134,7 @@ export const InteractableDefinitionSchema = z.object({
   sceneId: z.string().min(1),
   type: InteractableTypeSchema,
   label: z.string().min(1),
+  characterId: z.string().min(1).optional(),
   position: Vec3Schema,
   radius: z.number().positive(),
   onInteract: z.array(WorldActionSchema).min(1)

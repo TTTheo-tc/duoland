@@ -25,6 +25,7 @@
       "@sel-quest/persistence": ["packages/persistence/src/index.ts"],
       "@sel-quest/game-runtime": ["packages/game-runtime/src/index.ts"],
       "@sel-quest/renderer-phaser": ["packages/renderer-phaser/src/index.ts"],
+      "@sel-quest/renderer-r3f": ["packages/renderer-r3f/src/index.ts"],
       "@sel-quest/world-core": ["packages/world-core/src/index.ts"],
       "@sel-quest/narrative-core": ["packages/narrative-core/src/index.ts"],
       "@sel-quest/review-core": ["packages/review-core/src/index.ts"],

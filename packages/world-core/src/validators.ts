@@ -219,6 +219,47 @@ export function validateWorldSemantics(
       )
     }
 
+    if (interactable.type === 'npc') {
+      if (!interactable.characterId) {
+        issues.push(
+          error(
+            `interactables.${interactable.id}.characterId`,
+            'missing_npc_character_id',
+            'NPC interactables must explicitly reference a character.'
+          )
+        )
+      } else if (!characterIds.ids.has(interactable.characterId)) {
+        issues.push(
+          error(
+            `interactables.${interactable.id}.characterId`,
+            'unknown_npc_character_id',
+            'NPC interactable references an unknown character.'
+          )
+        )
+      } else if (
+        owningScene &&
+        !owningScene.characterPlacements.some(
+          (placement) => placement.characterId === interactable.characterId
+        )
+      ) {
+        issues.push(
+          error(
+            `interactables.${interactable.id}.characterId`,
+            'npc_character_missing_from_scene',
+            'NPC interactable references a character that is not placed in its scene.'
+          )
+        )
+      }
+    } else if (interactable.characterId) {
+      issues.push(
+        error(
+          `interactables.${interactable.id}.characterId`,
+          'unexpected_interactable_character_id',
+          'Only NPC interactables may reference a character.'
+        )
+      )
+    }
+
     for (const action of interactable.onInteract) {
       if (action.type === 'transition_scene' && !sceneIds.ids.has(action.sceneId)) {
         issues.push(

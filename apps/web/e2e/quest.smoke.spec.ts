@@ -59,6 +59,32 @@ test('loads the quest on a mobile viewport', async ({ page }) => {
   await expect(page.locator('.phaser-container canvas')).toBeVisible()
 })
 
+test('renders and interacts with the R3F world playground', async ({ page }) => {
+  await page.goto('/playground/world')
+
+  const canvas = page.locator('.r3f-world-shell canvas')
+  await expect(canvas).toBeVisible()
+  await expectNonBlankWebglCanvas(page)
+
+  const box = await canvas.boundingBox()
+  expect(box).not.toBeNull()
+  if (!box) {
+    throw new Error('R3F canvas bounding box missing')
+  }
+
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height * 0.58)
+  await expect(page.getByText('xiaoyu_npc')).toBeVisible()
+})
+
+test('loads the R3F world playground on a mobile viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/playground/world')
+
+  await expect(page.locator('.r3f-world-shell canvas')).toBeVisible()
+  await expect(page.getByRole('heading', { name: '心情颜色小镇' })).toBeVisible()
+  await expectNonBlankWebglCanvas(page)
+})
+
 async function openFreshQuest(page: Page) {
   await page.goto('/')
   await page.evaluate(() => window.localStorage.clear())
@@ -84,4 +110,54 @@ async function readSelectedEmotionIds(page: Page) {
     if (!raw) return []
     return JSON.parse(raw).activityState?.emotion_choice_001?.selectedEmotionIds ?? []
   }, progressKey)
+}
+
+async function expectNonBlankWebglCanvas(page: Page) {
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const canvas = document.querySelector('.r3f-world-shell canvas')
+          if (!(canvas instanceof HTMLCanvasElement)) {
+            return { ok: false, reason: 'missing canvas' }
+          }
+
+          const rect = canvas.getBoundingClientRect()
+          const gl = canvas.getContext('webgl2') ?? canvas.getContext('webgl')
+          if (!gl) {
+            return {
+              ok: false,
+              reason: 'missing webgl context',
+              rect: { width: rect.width, height: rect.height }
+            }
+          }
+
+          const width = gl.drawingBufferWidth
+          const height = gl.drawingBufferHeight
+          const pixels = new Uint8Array(width * height * 4)
+          gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+
+          let nonBackground = 0
+          const stride = Math.max(4, Math.floor(pixels.length / 20000 / 4) * 4)
+          for (let index = 0; index < pixels.length; index += stride) {
+            const r = pixels[index]
+            const g = pixels[index + 1]
+            const b = pixels[index + 2]
+            if (Math.abs(r - 215) + Math.abs(g - 245) + Math.abs(b - 255) > 35) {
+              nonBackground += 1
+            }
+          }
+
+          const sampled = Math.ceil(pixels.length / stride)
+          return {
+            ok: rect.width > 200 && rect.height > 200 && nonBackground > sampled * 0.03,
+            rect: { width: rect.width, height: rect.height },
+            drawingBuffer: { width, height },
+            nonBackground,
+            sampled
+          }
+        }),
+      { timeout: 5000 }
+    )
+    .toMatchObject({ ok: true })
 }
