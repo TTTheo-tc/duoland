@@ -59,6 +59,20 @@ test('loads the quest on a mobile viewport', async ({ page }) => {
   await expect(page.locator('.phaser-container canvas')).toBeVisible()
 })
 
+test('loads the authoring studio dashboard', async ({ page }) => {
+  await page.goto('/studio')
+
+  await expect(page.getByRole('heading', { name: '内容工作台' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '情绪侦探' })).toBeVisible()
+  await expect(page.getByText('needs expert review')).toBeVisible()
+  await expect(page.getByText('world_narrative')).toBeVisible()
+  await expect(page.getByText('asset_representation')).toBeVisible()
+  await expect(page.getByRole('link', { name: '预览' })).toHaveAttribute(
+    'href',
+    '/preview/quests/emotion-detective'
+  )
+})
+
 test('renders and interacts with the R3F world playground', async ({ page }) => {
   await page.goto('/playground/world')
 

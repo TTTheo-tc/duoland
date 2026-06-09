@@ -1,6 +1,7 @@
 import {
   auditAuthoringEvidence,
   createAuthoringSnapshot,
+  createContentReviewPolicy,
   getAuthoringPublishabilityReasons,
   type AuthoringEvidenceIssue,
   type AuthoringReviewSurfaceInput
@@ -54,6 +55,60 @@ export function getQuestAuthoringSnapshot(slug: string) {
     validationReport: entry.validationReport,
     expertReviews: entry.expertReviews,
     reviewSurface: getQuestReviewSurface(entry)
+  })
+}
+
+export function listAuthoringQuestSummaries() {
+  return questEntries.map((entry) => {
+    const reviewSurface = getQuestReviewSurface(entry)
+    const reviewPolicy = createContentReviewPolicy(reviewSurface)
+    const snapshot = createAuthoringSnapshot({
+      quest: entry.quest,
+      validationReport: entry.validationReport,
+      expertReviews: entry.expertReviews,
+      reviewPolicy
+    })
+    const currentApprovedReviews = entry.expertReviews.filter(
+      (review) =>
+        review.contentItemId === entry.quest.id &&
+        review.contentVersion === entry.quest.version &&
+        review.contentHash === snapshot.contentHash &&
+        review.decision === 'approved' &&
+        review.requiredFollowUps.length === 0
+    )
+    const presentCoverageSections = [
+      ...new Set(
+        currentApprovedReviews.flatMap(
+          (review) => review.reviewCoverage.reviewedSections
+        )
+      )
+    ].sort()
+    const missingCoverageSections =
+      reviewPolicy.requiredCoverageSections.filter(
+        (section) => !presentCoverageSections.includes(section)
+      )
+
+    return {
+      id: entry.quest.id,
+      slug: entry.quest.slug,
+      title: entry.quest.title,
+      version: entry.quest.version,
+      questStatus: entry.quest.status,
+      authoringState: snapshot.state,
+      validationStatus: entry.validationReport.status,
+      validationIssueCount: entry.validationReport.issues.length,
+      blockingIssueCount: entry.validationReport.issues.filter(
+        (issue) => issue.blocksPublishing
+      ).length,
+      expertReviewCount: entry.expertReviews.length,
+      approvedReviewCount: currentApprovedReviews.length,
+      requiredApprovingRoles: reviewPolicy.requiredApprovingRoles,
+      requiredCoverageSections: reviewPolicy.requiredCoverageSections,
+      presentCoverageSections,
+      missingCoverageSections,
+      reviewSurface,
+      publishabilityReasons: snapshot.publishabilityReasons
+    }
   })
 }
 
