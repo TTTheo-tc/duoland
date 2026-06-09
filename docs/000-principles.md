@@ -20,6 +20,7 @@ schema checks, tests, validators, expert review, or release gates.
    reviewed with the child-facing experience.
 6. Public quest routes must only load publishable content. Draft content belongs
    in preview routes and authoring tools.
+7. Authoring UI belongs in `apps/studio`, not in the child-facing web runtime.
 
 ## Architecture Boundaries
 
@@ -36,6 +37,11 @@ schema checks, tests, validators, expert review, or release gates.
    content.
 6. Activity implementations can render and collect structured interaction
    results. They must not infer psychological traits from those results.
+7. `ai-runtime` is an authoring-side package. It must stay out of child-facing
+   runtime, renderers, and web-loaded content facades until a deliberate
+   server-only authoring integration is added.
+8. Package boundary checks must be executable, not just documented. The current
+   boundary gate is `npm run validate:boundaries`.
 
 ## Content Quality Rules
 
@@ -55,8 +61,9 @@ schema checks, tests, validators, expert review, or release gates.
 1. Prefer small PRs with one architectural purpose.
 2. Every PR must state whether it changes runtime behavior, content evidence,
    authoring gates, or only documentation.
-3. Every PR should run the smallest meaningful checks, and release-affecting PRs
-   should run `npm run lint`, `npm test`, `npm run build`, and content checks.
+3. Every PR should run the smallest meaningful checks. Release-affecting PRs
+   should run `npm run check`; UI/runtime PRs should also run the relevant smoke
+   test.
 4. Every PR must be reviewed by an independent agent before merge.
 5. If a rule cannot be enforced yet, document the intended future check and do
    not pretend it is already enforced.

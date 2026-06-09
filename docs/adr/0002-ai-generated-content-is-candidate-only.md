@@ -31,3 +31,7 @@ candidate generation
 - Runtime packages should not call LLMs for child-facing content.
 - `content:publish` remains the release gate for local content artifacts.
 - Future AI services must produce reviewable artifacts, not published quests.
+- `ai-runtime` records prompt/output hashes and safe metadata, not raw prompt or
+  output text.
+- `apps/studio` is the authoring UI entrypoint. The child-facing `apps/web`
+  runtime must not host authoring dashboards or AI integrations.
