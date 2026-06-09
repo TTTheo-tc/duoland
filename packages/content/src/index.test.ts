@@ -12,6 +12,7 @@ import {
   getQuestValidationReport,
   getQuestWorldBySlug,
   isQuestPublishable,
+  listAuthoringQuestSummaries,
   listPublishableQuests
 } from './index'
 import { getPreviewQuestBySlug, listPreviewQuests } from './preview'
@@ -151,6 +152,66 @@ describe('content package publishability gates', () => {
       'missing review coverage section world_narrative',
       'missing review coverage section asset_representation'
     ])
+  })
+
+  it('lists authoring summaries with surface review coverage requirements', () => {
+    const [summary] = listAuthoringQuestSummaries()
+
+    expect(summary.slug).toBe('emotion-detective')
+    expect(summary.authoringState).toBe('needs_expert_review')
+    expect(summary.reviewSurface).toEqual({
+      usesWorldNarrative: true,
+      usesAssetRepresentation: true
+    })
+    expect(summary.requiredCoverageSections).toContain('world_narrative')
+    expect(summary.requiredCoverageSections).toContain('asset_representation')
+    expect(summary.missingCoverageSections).toEqual(
+      summary.requiredCoverageSections
+    )
+  })
+
+  it('does not count stale review coverage in authoring summaries', () => {
+    const entry = getQuestEntryBySlug('emotion-detective')
+    if (!entry) throw new Error('Expected local quest fixture.')
+
+    const originalDescription = entry.quest.description
+    const originalReviews = [...entry.expertReviews]
+
+    entry.expertReviews.push({
+      id: 'review_stale_hash_001',
+      contentItemId: entry.quest.id,
+      contentVersion: entry.quest.version,
+      contentHash: entry.validationReport.contentHash,
+      reviewer: {
+        id: 'reviewer_stale',
+        role: 'safety_reviewer'
+      },
+      decision: 'approved',
+      reviewedIssueIds: [],
+      reviewCoverage: {
+        reviewedSections: ['child_content']
+      },
+      notes: ['Stale approval fixture for summary filtering.'],
+      requiredFollowUps: [],
+      createdAt: '2026-06-01T00:00:00.000Z'
+    })
+    entry.quest.description = `${originalDescription} Stale review test.`
+
+    try {
+      const summary = listAuthoringQuestSummaries().find(
+        (item) => item.slug === 'emotion-detective'
+      )
+
+      expect(summary?.authoringState).toBe('auto_validation_failed')
+      expect(summary?.approvedReviewCount).toBe(0)
+      expect(summary?.presentCoverageSections).toEqual([])
+      expect(summary?.missingCoverageSections).toEqual(
+        summary?.requiredCoverageSections
+      )
+    } finally {
+      entry.quest.description = originalDescription
+      entry.expertReviews.splice(0, entry.expertReviews.length, ...originalReviews)
+    }
   })
 
   it('does not list draft quests as publishable', () => {
