@@ -21,6 +21,7 @@
     "@sel-quest/content-authoring": "0.1.0",
     "@sel-quest/content-validation": "0.1.0",
     "@sel-quest/review-core": "0.1.0",
-    "@sel-quest/quest-core": "0.1.0"
+    "@sel-quest/quest-core": "0.1.0",
+    "@sel-quest/world-core": "0.1.0"
   }
 }

@@ -84,6 +84,34 @@ describe('quest-core', () => {
     expect(validateQuestDefinition(mockQuest)).toEqual(mockQuest)
   })
 
+  it('allows a quest to reference an external world entry scene', () => {
+    const worldQuest: QuestDefinition = {
+      ...mockQuest,
+      worldBinding: {
+        worldId: 'emotion-town',
+        entrySceneId: 'art_room',
+        preferredRenderer: 'phaser'
+      }
+    }
+
+    expect(validateQuestDefinition(worldQuest).worldBinding).toEqual(
+      worldQuest.worldBinding
+    )
+  })
+
+  it('rejects unknown preferred world renderers', () => {
+    const worldQuest = {
+      ...mockQuest,
+      worldBinding: {
+        worldId: 'emotion-town',
+        entrySceneId: 'art_room',
+        preferredRenderer: 'unity'
+      }
+    }
+
+    expect(() => validateQuestDefinition(worldQuest)).toThrow()
+  })
+
   it('allows custom activity kinds for externally registered plugins', () => {
     const customActivityQuest: QuestDefinition = {
       ...mockQuest,
