@@ -7,7 +7,12 @@ import {
 import {
   ContentPublishabilityError
 } from '@sel-quest/review-core'
-import { getQuestEntryBySlug, questEntries, toQuestSummary } from './registry'
+import {
+  getQuestEntryBySlug,
+  getQuestWorldBySlug,
+  questEntries,
+  toQuestSummary
+} from './registry'
 
 export function listPublishableQuests() {
   return questEntries
@@ -24,6 +29,8 @@ export function getPublishableQuestBySlug(slug: string) {
 export function getQuestValidationReport(slug: string) {
   return getQuestEntryBySlug(slug)?.validationReport ?? null
 }
+
+export { getQuestWorldBySlug }
 
 export function getQuestExpertReviews(slug: string) {
   return getQuestEntryBySlug(slug)?.expertReviews ?? []

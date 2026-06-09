@@ -15,6 +15,14 @@ export type DataSensitivity =
 
 export type QuestStatus = 'draft' | 'published' | 'archived'
 
+export type PreferredWorldRenderer = 'react' | 'phaser' | 'r3f'
+
+export interface QuestWorldBinding {
+  worldId: string
+  entrySceneId: string
+  preferredRenderer?: PreferredWorldRenderer
+}
+
 export type SelCompetency =
   | 'self_awareness'
   | 'self_management'
@@ -174,6 +182,7 @@ export interface QuestDefinition {
   ageBand: AgeBand
   estimatedMinutes: number
   learningObjectives: LearningObjective[]
+  worldBinding?: QuestWorldBinding
   safety: QuestSafetyDefinition
   guardianSummary: GuardianSummary
   teacherGuide?: TeacherGuide
