@@ -33,8 +33,9 @@ Engineering implication:
 
 - Review packets must include the full reviewable surface, not only summaries.
 - Expert reviews should record decision, role, notes, required follow-ups, and
-  reviewed issue IDs.
-- Future review policy should require role coverage, not just one approval.
+  reviewed issue IDs, and review coverage.
+- Review policy requires distinct approving reviewers, required roles, and
+  coverage sections rather than a single approval.
 
 ## EvalGen
 

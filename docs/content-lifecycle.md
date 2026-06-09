@@ -38,8 +38,10 @@ Before a quest can be published, it needs:
 3. No blocking validation issues.
 4. A safety decision of `allow`.
 5. Low overall risk and appropriate age fit.
-6. Matching expert review evidence.
-7. No required expert follow-ups.
+6. Matching expert review evidence that satisfies the default review policy.
+7. At least two distinct approving reviewers are present.
+8. Required reviewer roles and review coverage sections are present.
+9. No required expert follow-ups.
 
 The current lifecycle commands support this process:
 
@@ -76,8 +78,6 @@ AI services must not:
 
 The next lifecycle extensions should be:
 
-1. Review policy with required reviewer roles.
-2. Review coverage for child content, guardian summary, teacher guide, world
-   narrative, activity feedback, and assets.
-3. Validator evaluation with gold cases and critical false-negative gates.
-4. Studio UI over the existing content lifecycle commands.
+1. Review coverage expansion for world narrative and asset representation when
+   published content uses those surfaces.
+2. Studio UI over the existing content lifecycle commands.

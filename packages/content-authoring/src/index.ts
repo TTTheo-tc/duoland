@@ -3,6 +3,7 @@ import {
   createContentHash,
   getContentPublishabilityReasons,
   getExpertReviewPublishabilityReasons,
+  isExpertReviewPublishable,
   type AuthoringState,
   type ContentExpertReview,
   type ContentValidationReport
@@ -130,6 +131,17 @@ export function deriveAuthoringState(input: {
     )
   ) {
     return 'expert_changes_requested'
+  }
+
+  if (
+    !isExpertReviewPublishable({
+      contentItemId: input.quest.id,
+      contentVersion: input.quest.version,
+      expectedContentHash: createQuestContentHash(input.quest),
+      reviews: matchingExpertReviews
+    })
+  ) {
+    return 'needs_expert_review'
   }
 
   return input.quest.status === 'published' ? 'published' : 'approved'

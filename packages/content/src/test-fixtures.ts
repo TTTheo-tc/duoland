@@ -188,10 +188,44 @@ export function createApprovedReview(quest: QuestDefinition): ContentExpertRevie
     },
     decision: 'approved',
     reviewedIssueIds: [],
+    reviewCoverage: {
+      reviewedSections: [
+        'child_content',
+        'guardian_summary',
+        'teacher_guide',
+        'safety_policy',
+        'activity_feedback'
+      ]
+    },
     notes: ['Approved for structured SEL content.'],
     requiredFollowUps: [],
     createdAt: '2026-06-09T00:00:00.000Z'
   }
+}
+
+export function createRequiredApprovedReviews(
+  quest: QuestDefinition
+): ContentExpertReview[] {
+  const baseReview = createApprovedReview(quest)
+
+  return [
+    {
+      ...baseReview,
+      id: `review_${quest.id}_${quest.version}_teacher_001`,
+      reviewer: {
+        id: 'reviewer_teacher_001',
+        role: 'school_mental_health_teacher'
+      }
+    },
+    {
+      ...baseReview,
+      id: `review_${quest.id}_${quest.version}_safety_001`,
+      reviewer: {
+        id: 'reviewer_safety_001',
+        role: 'safety_reviewer'
+      }
+    }
+  ]
 }
 
 export async function runContentScript(input: {

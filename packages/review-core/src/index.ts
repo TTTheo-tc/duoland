@@ -100,6 +100,22 @@ export const ExpertReviewDecisionSchema = z.enum([
   'rejected'
 ])
 
+export const ReviewCoverageSectionSchema = z.enum([
+  'child_content',
+  'guardian_summary',
+  'teacher_guide',
+  'safety_policy',
+  'world_narrative',
+  'activity_feedback',
+  'asset_representation'
+])
+
+export const ReviewCoverageSchema = z
+  .object({
+    reviewedSections: z.array(ReviewCoverageSectionSchema).default([])
+  })
+  .default({ reviewedSections: [] })
+
 export const ContentExpertReviewSchema = z.object({
   id: z.string().min(1),
   contentItemId: z.string().min(1),
@@ -112,6 +128,7 @@ export const ContentExpertReviewSchema = z.object({
   }),
   decision: ExpertReviewDecisionSchema,
   reviewedIssueIds: z.array(z.string().min(1)).default([]),
+  reviewCoverage: ReviewCoverageSchema,
   notes: z.array(z.string().min(1)).default([]),
   requiredFollowUps: z.array(z.string().min(1)).default([]),
   createdAt: z.string().min(1)
@@ -180,6 +197,7 @@ export const ContentReviewPacketSchema = z.object({
       id: z.string().min(1),
       reviewer: ContentExpertReviewSchema.shape.reviewer,
       decision: ExpertReviewDecisionSchema,
+      reviewCoverage: ReviewCoverageSchema,
       requiredFollowUpCount: z.number().int().nonnegative(),
       createdAt: z.string().min(1)
     })
@@ -243,6 +261,8 @@ export type ContentValidationReport = z.infer<
 >
 export type ExpertReviewerRole = z.infer<typeof ExpertReviewerRoleSchema>
 export type ExpertReviewDecision = z.infer<typeof ExpertReviewDecisionSchema>
+export type ReviewCoverageSection = z.infer<typeof ReviewCoverageSectionSchema>
+export type ReviewCoverage = z.infer<typeof ReviewCoverageSchema>
 export type ContentExpertReview = z.infer<typeof ContentExpertReviewSchema>
 export type ContentReviewPacket = z.infer<typeof ContentReviewPacketSchema>
 export type ContentRevisionPacket = z.infer<typeof ContentRevisionPacketSchema>
@@ -257,6 +277,26 @@ export class ContentPublishabilityError extends Error {
     super('Content is not publishable')
     this.reasons = reasons
   }
+}
+
+export interface ContentReviewPolicy {
+  minimumApprovalCount: number
+  minimumDistinctReviewerCount: number
+  requiredApprovingRoles: ExpertReviewerRole[]
+  requiredCoverageSections: ReviewCoverageSection[]
+}
+
+export const defaultContentReviewPolicy: ContentReviewPolicy = {
+  minimumApprovalCount: 2,
+  minimumDistinctReviewerCount: 2,
+  requiredApprovingRoles: ['school_mental_health_teacher', 'safety_reviewer'],
+  requiredCoverageSections: [
+    'child_content',
+    'guardian_summary',
+    'teacher_guide',
+    'safety_policy',
+    'activity_feedback'
+  ]
 }
 
 export function validateContentValidationReport(
@@ -347,6 +387,7 @@ export function isExpertReviewPublishable(input: {
   contentVersion: string
   expectedContentHash?: string
   reviews: ContentExpertReview[]
+  policy?: ContentReviewPolicy
 }) {
   return getExpertReviewPublishabilityReasons(input).length === 0
 }
@@ -356,7 +397,9 @@ export function getExpertReviewPublishabilityReasons(input: {
   contentVersion: string
   expectedContentHash?: string
   reviews: ContentExpertReview[]
+  policy?: ContentReviewPolicy
 }) {
+  const policy = input.policy ?? defaultContentReviewPolicy
   const versionMatchedReviews = input.reviews.filter(
     (review) =>
       review.contentItemId === input.contentItemId &&
@@ -381,6 +424,43 @@ export function getExpertReviewPublishabilityReasons(input: {
 
   if (!matchingReviews.some((review) => review.decision === 'approved')) {
     reasons.push('missing expert approval')
+  }
+
+  const approvedReviews = matchingReviews.filter(
+    (review) =>
+      review.decision === 'approved' && review.requiredFollowUps.length === 0
+  )
+
+  if (approvedReviews.length < policy.minimumApprovalCount) {
+    reasons.push(
+      `requires at least ${policy.minimumApprovalCount} approved expert reviews`
+    )
+  }
+
+  const distinctReviewerCount = new Set(
+    approvedReviews.map((review) => review.reviewer.id)
+  ).size
+
+  if (distinctReviewerCount < policy.minimumDistinctReviewerCount) {
+    reasons.push(
+      `requires at least ${policy.minimumDistinctReviewerCount} distinct approving reviewers`
+    )
+  }
+
+  for (const role of policy.requiredApprovingRoles) {
+    if (!approvedReviews.some((review) => review.reviewer.role === role)) {
+      reasons.push(`missing required reviewer role ${role}`)
+    }
+  }
+
+  for (const section of policy.requiredCoverageSections) {
+    if (
+      !approvedReviews.some((review) =>
+        review.reviewCoverage.reviewedSections.includes(section)
+      )
+    ) {
+      reasons.push(`missing review coverage section ${section}`)
+    }
   }
 
   for (const review of matchingReviews) {

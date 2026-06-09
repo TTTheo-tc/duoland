@@ -51,10 +51,38 @@ const approvedReview: ContentExpertReview = {
   },
   decision: 'approved',
   reviewedIssueIds: [],
+  reviewCoverage: {
+    reviewedSections: [
+      'child_content',
+      'guardian_summary',
+      'teacher_guide',
+      'safety_policy',
+      'activity_feedback'
+    ]
+  },
   notes: ['Approved for structured SEL preview content.'],
   requiredFollowUps: [],
   createdAt: '2026-06-09T00:00:00.000Z'
 }
+
+const requiredApprovalReviews: ContentExpertReview[] = [
+  {
+    ...approvedReview,
+    id: 'expert_review_teacher_001',
+    reviewer: {
+      id: 'reviewer_teacher_001',
+      role: 'school_mental_health_teacher'
+    }
+  },
+  {
+    ...approvedReview,
+    id: 'expert_review_safety_001',
+    reviewer: {
+      id: 'reviewer_safety_001',
+      role: 'safety_reviewer'
+    }
+  }
+]
 
 const reviewableLearningObjective = {
   id: 'lo_emotion_recognition',
@@ -234,13 +262,13 @@ describe('review-core', () => {
     ).toThrow()
   })
 
-  it('requires a matching expert approval for publishability', () => {
+  it('requires a matching expert approval policy for publishability', () => {
     expect(
       isExpertReviewPublishable({
         contentItemId: 'emotion-detective',
         contentVersion: '1.0.0',
         expectedContentHash: 'sha256_test0001',
-        reviews: [approvedReview]
+        reviews: requiredApprovalReviews
       })
     ).toBe(true)
 
@@ -251,7 +279,83 @@ describe('review-core', () => {
         expectedContentHash: 'sha256_test0001',
         reviews: []
       })
-    ).toContain('missing expert approval')
+    ).toEqual([
+      'missing expert approval',
+      'requires at least 2 approved expert reviews',
+      'requires at least 2 distinct approving reviewers',
+      'missing required reviewer role school_mental_health_teacher',
+      'missing required reviewer role safety_reviewer',
+      'missing review coverage section child_content',
+      'missing review coverage section guardian_summary',
+      'missing review coverage section teacher_guide',
+      'missing review coverage section safety_policy',
+      'missing review coverage section activity_feedback'
+    ])
+
+    expect(
+      getExpertReviewPublishabilityReasons({
+        contentItemId: 'emotion-detective',
+        contentVersion: '1.0.0',
+        expectedContentHash: 'sha256_test0001',
+        reviews: [approvedReview]
+      })
+    ).toEqual([
+      'requires at least 2 approved expert reviews',
+      'requires at least 2 distinct approving reviewers',
+      'missing required reviewer role school_mental_health_teacher',
+      'missing required reviewer role safety_reviewer'
+    ])
+  })
+
+  it('requires approvals from distinct reviewers', () => {
+    const sameReviewerApprovals = [
+      {
+        ...requiredApprovalReviews[0],
+        reviewer: {
+          id: 'reviewer_shared_001',
+          role: 'school_mental_health_teacher' as const
+        }
+      },
+      {
+        ...requiredApprovalReviews[1],
+        reviewer: {
+          id: 'reviewer_shared_001',
+          role: 'safety_reviewer' as const
+        }
+      }
+    ]
+
+    expect(
+      getExpertReviewPublishabilityReasons({
+        contentItemId: 'emotion-detective',
+        contentVersion: '1.0.0',
+        expectedContentHash: 'sha256_test0001',
+        reviews: sameReviewerApprovals
+      })
+    ).toEqual(['requires at least 2 distinct approving reviewers'])
+  })
+
+  it('requires review coverage across approved reviews', () => {
+    const missingCoverage = requiredApprovalReviews.map((review) => ({
+      ...review,
+      reviewCoverage: {
+        reviewedSections: ['child_content' as const]
+      }
+    }))
+
+    expect(
+      getExpertReviewPublishabilityReasons({
+        contentItemId: 'emotion-detective',
+        contentVersion: '1.0.0',
+        expectedContentHash: 'sha256_test0001',
+        reviews: missingCoverage
+      })
+    ).toEqual([
+      'missing review coverage section guardian_summary',
+      'missing review coverage section teacher_guide',
+      'missing review coverage section safety_policy',
+      'missing review coverage section activity_feedback'
+    ])
   })
 
   it('rejects expert reviews with required follow-ups', () => {
@@ -267,7 +371,7 @@ describe('review-core', () => {
         contentItemId: 'emotion-detective',
         contentVersion: '1.0.0',
         expectedContentHash: 'sha256_test0001',
-        reviews: [approvedReview, changesRequested]
+        reviews: [...requiredApprovalReviews, changesRequested]
       })
     ).toEqual([
       'expert review expert_review_002 is changes_requested',
@@ -281,11 +385,21 @@ describe('review-core', () => {
         contentItemId: 'emotion-detective',
         contentVersion: '1.0.0',
         expectedContentHash: 'sha256_current1',
-        reviews: [approvedReview]
+        reviews: requiredApprovalReviews
       })
     ).toEqual([
-      'expert review expert_review_001 content hash does not match quest content hash',
-      'missing expert approval'
+      'expert review expert_review_teacher_001 content hash does not match quest content hash',
+      'expert review expert_review_safety_001 content hash does not match quest content hash',
+      'missing expert approval',
+      'requires at least 2 approved expert reviews',
+      'requires at least 2 distinct approving reviewers',
+      'missing required reviewer role school_mental_health_teacher',
+      'missing required reviewer role safety_reviewer',
+      'missing review coverage section child_content',
+      'missing review coverage section guardian_summary',
+      'missing review coverage section teacher_guide',
+      'missing review coverage section safety_policy',
+      'missing review coverage section activity_feedback'
     ])
   })
 })

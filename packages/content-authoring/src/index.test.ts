@@ -91,10 +91,38 @@ const approvedReview: ContentExpertReview = {
   },
   decision: 'approved',
   reviewedIssueIds: [],
+  reviewCoverage: {
+    reviewedSections: [
+      'child_content',
+      'guardian_summary',
+      'teacher_guide',
+      'safety_policy',
+      'activity_feedback'
+    ]
+  },
   notes: ['Approved.'],
   requiredFollowUps: [],
   createdAt: '2026-06-09T00:00:00.000Z'
 }
+
+const requiredApprovalReviews: ContentExpertReview[] = [
+  {
+    ...approvedReview,
+    id: 'review_teacher_001',
+    reviewer: {
+      id: 'reviewer_teacher_001',
+      role: 'school_mental_health_teacher'
+    }
+  },
+  {
+    ...approvedReview,
+    id: 'review_safety_001',
+    reviewer: {
+      id: 'reviewer_safety_001',
+      role: 'safety_reviewer'
+    }
+  }
+]
 
 describe('content-authoring', () => {
   it('treats quests without validation reports as drafting', () => {
@@ -169,12 +197,22 @@ describe('content-authoring', () => {
     ).toBe('expert_changes_requested')
   })
 
-  it('marks approved draft content separately from published content', () => {
+  it('keeps incomplete expert policy coverage in expert review', () => {
     expect(
       deriveAuthoringState({
         quest,
         validationReport: passedReport,
         expertReviews: [approvedReview]
+      })
+    ).toBe('needs_expert_review')
+  })
+
+  it('marks approved draft content separately from published content', () => {
+    expect(
+      deriveAuthoringState({
+        quest,
+        validationReport: passedReport,
+        expertReviews: requiredApprovalReviews
       })
     ).toBe('approved')
 
@@ -182,7 +220,7 @@ describe('content-authoring', () => {
       deriveAuthoringState({
         quest: { ...quest, status: 'published' },
         validationReport: passedReport,
-        expertReviews: [approvedReview]
+        expertReviews: requiredApprovalReviews
       })
     ).toBe('published')
   })
@@ -198,7 +236,16 @@ describe('content-authoring', () => {
     expect(snapshot.contentHash).toBe(questHash)
     expect(snapshot.publishabilityReasons).toEqual([
       'quest status is draft',
-      'missing expert approval'
+      'missing expert approval',
+      'requires at least 2 approved expert reviews',
+      'requires at least 2 distinct approving reviewers',
+      'missing required reviewer role school_mental_health_teacher',
+      'missing required reviewer role safety_reviewer',
+      'missing review coverage section child_content',
+      'missing review coverage section guardian_summary',
+      'missing review coverage section teacher_guide',
+      'missing review coverage section safety_policy',
+      'missing review coverage section activity_feedback'
     ])
   })
 

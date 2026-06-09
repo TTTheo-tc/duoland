@@ -363,7 +363,7 @@ Quest Runtime
 AI MUST NOT directly publish child-facing content.
 LLM validators are screening aids, not final authority.
 Human expert approval is required before production publishing.
-Published quests must have a matching validation report and matching expert review.
+Published quests must have a matching validation report and matching expert reviews that satisfy the current review policy.
 Blocking issues prevent publishing.
 Required expert follow-ups prevent publishing.
 Runtime packages must not depend on authoring implementation details.
@@ -378,7 +378,10 @@ ContentValidationReport.contentVersion === QuestDefinition.version
 ContentValidationReport.contentHash === hash(reviewable QuestDefinition content)
 ContentValidationReport.status === 'passed'
 ContentValidationReport.summary.safetyDecision === 'allow'
-At least one ContentExpertReview decision is 'approved'
+At least two matching ContentExpertReview records have decision 'approved'
+Approved reviews come from at least two distinct reviewers
+Approved reviews include school_mental_health_teacher and safety_reviewer roles
+Approved reviews cover child_content, guardian_summary, teacher_guide, safety_policy, and activity_feedback
 Approved ContentExpertReview.contentHash === hash(reviewable QuestDefinition content)
 No matching ContentExpertReview has required follow-ups
 ```
@@ -408,7 +411,7 @@ auditContentEvidence
   does not fail draft content merely because expert review is still missing
 
 isQuestPublishable
-  requires published status, passed validation report, matching expert approval, no follow-ups, and matching content hash
+  requires published status, passed validation report, matching expert approvals satisfying policy, no follow-ups, and matching content hash
 ```
 
 CI SHOULD run:
@@ -483,10 +486,10 @@ Authoring state SHOULD be derived from evidence rather than manually edited:
 | `drafting` | Quest exists but has no validation report yet. |
 | `auto_validation_failed` | Validation evidence is missing/mismatched, or automated validation is blocked. |
 | `needs_ai_refinement` | Automated validation found minor or major revision work. |
-| `needs_expert_review` | Automated validation passed, but no matching expert review exists. |
+| `needs_expert_review` | Automated validation passed, but matching expert reviews do not yet satisfy the review policy. |
 | `expert_changes_requested` | Expert review requested changes or required follow-ups. |
-| `approved` | Validation passed and expert review approved, but quest is not published. |
-| `published` | Validation passed, expert review approved, and quest status is `published`. |
+| `approved` | Validation passed and matching expert reviews satisfy the review policy, but quest is not published. |
+| `published` | Validation passed, matching expert reviews satisfy the review policy, and quest status is `published`. |
 | `archived` | Quest status is `archived`. |
 
 ---
