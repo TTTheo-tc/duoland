@@ -1,4 +1,8 @@
 import type { WorldRuntimeState } from './types.ts'
+import {
+  WorldRendererToRuntimeEventSchema,
+  WorldRuntimeToRendererEventSchema
+} from './schema.ts'
 
 export interface WorldRuntimeStateChangedEvent {
   type: 'WORLD_STATE_CHANGED'
@@ -33,3 +37,19 @@ export type WorldRendererToRuntimeEvent =
   | WorldObjectObservedEvent
   | WorldCutsceneCompletedEvent
   | WorldActivityCompletedEvent
+
+export function validateWorldRuntimeToRendererEvent(
+  input: unknown
+): WorldRuntimeToRendererEvent {
+  return WorldRuntimeToRendererEventSchema.parse(
+    input
+  ) as WorldRuntimeToRendererEvent
+}
+
+export function validateWorldRendererToRuntimeEvent(
+  input: unknown
+): WorldRendererToRuntimeEvent {
+  return WorldRendererToRuntimeEventSchema.parse(
+    input
+  ) as WorldRendererToRuntimeEvent
+}

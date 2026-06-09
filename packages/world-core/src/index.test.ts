@@ -5,6 +5,8 @@ import {
   createInitialWorldState,
   setWorldFlag,
   transitionWorldScene,
+  validateWorldRendererToRuntimeEvent,
+  validateWorldRuntimeToRendererEvent,
   validateWorldBindingReference,
   validateWorldDefinition,
   validateWorldSemantics,
@@ -285,5 +287,73 @@ describe('world-core', () => {
     expect(flaggedState.flags.observed_crumpled_drawing).toBe(true)
     expect(completedState.completedInteractableIds).toEqual(['crumpled_drawing'])
     expect(transitionedState.visitedSceneIds).toEqual(['art_room'])
+  })
+
+  it('validates runtime-to-renderer world events', () => {
+    const state = createInitialWorldState(world, {
+      entrySceneId: 'art_room'
+    })
+
+    expect(
+      validateWorldRuntimeToRendererEvent({
+        type: 'WORLD_STATE_CHANGED',
+        state
+      })
+    ).toEqual({
+      type: 'WORLD_STATE_CHANGED',
+      state
+    })
+
+    expect(() =>
+      validateWorldRuntimeToRendererEvent({
+        type: 'WORLD_STATE_CHANGED',
+        state: {
+          ...state,
+          activeSceneId: ''
+        }
+      })
+    ).toThrow()
+  })
+
+  it('validates renderer-to-runtime world events', () => {
+    expect(
+      validateWorldRendererToRuntimeEvent({
+        type: 'INTERACTABLE_CLICKED',
+        interactableId: 'xiaoyu_npc'
+      })
+    ).toEqual({
+      type: 'INTERACTABLE_CLICKED',
+      interactableId: 'xiaoyu_npc'
+    })
+
+    expect(
+      validateWorldRendererToRuntimeEvent({
+        type: 'WORLD_ACTIVITY_COMPLETED',
+        activityId: 'dialogue_intro',
+        payload: {
+          selectedLineId: 'line_1'
+        }
+      })
+    ).toEqual({
+      type: 'WORLD_ACTIVITY_COMPLETED',
+      activityId: 'dialogue_intro',
+      payload: {
+        selectedLineId: 'line_1'
+      }
+    })
+
+    expect(() =>
+      validateWorldRendererToRuntimeEvent({
+        type: 'INTERACTABLE_CLICKED',
+        interactableId: ''
+      })
+    ).toThrow()
+
+    expect(() =>
+      validateWorldRendererToRuntimeEvent({
+        type: 'UNKNOWN_WORLD_EVENT',
+        interactableId: 'xiaoyu_npc'
+      })
+    ).toThrow()
   })
 })

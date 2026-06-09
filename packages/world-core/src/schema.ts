@@ -182,3 +182,39 @@ export const WorldRuntimeStateSchema = z.object({
   completedInteractableIds: z.array(z.string().min(1)),
   flags: z.record(z.union([z.boolean(), z.string(), z.number()]))
 })
+
+export const WorldRuntimeStateChangedEventSchema = z.object({
+  type: z.literal('WORLD_STATE_CHANGED'),
+  state: WorldRuntimeStateSchema
+})
+
+export const WorldRuntimeToRendererEventSchema =
+  WorldRuntimeStateChangedEventSchema
+
+export const WorldInteractableClickedEventSchema = z.object({
+  type: z.literal('INTERACTABLE_CLICKED'),
+  interactableId: z.string().min(1)
+})
+
+export const WorldObjectObservedEventSchema = z.object({
+  type: z.literal('WORLD_OBJECT_OBSERVED'),
+  interactableId: z.string().min(1)
+})
+
+export const WorldCutsceneCompletedEventSchema = z.object({
+  type: z.literal('CUTSCENE_COMPLETED'),
+  cutsceneId: z.string().min(1)
+})
+
+export const WorldActivityCompletedEventSchema = z.object({
+  type: z.literal('WORLD_ACTIVITY_COMPLETED'),
+  activityId: z.string().min(1),
+  payload: z.record(z.unknown()).optional()
+})
+
+export const WorldRendererToRuntimeEventSchema = z.discriminatedUnion('type', [
+  WorldInteractableClickedEventSchema,
+  WorldObjectObservedEventSchema,
+  WorldCutsceneCompletedEventSchema,
+  WorldActivityCompletedEventSchema
+])
