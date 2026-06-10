@@ -33,16 +33,29 @@ export const SelContentIssueTypeSchema = z.enum([
 
 export const ContentIssueSeveritySchema = z.enum(['minor', 'major', 'critical'])
 
+export const ContentIssueLocationSchema = z.object({
+  questId: z.string().min(1),
+  stageId: z.string().min(1).optional(),
+  activityId: z.string().min(1).optional(),
+  worldId: z.string().min(1).optional(),
+  zoneId: z.string().min(1).optional(),
+  sceneId: z.string().min(1).optional(),
+  characterId: z.string().min(1).optional(),
+  interactableId: z.string().min(1).optional(),
+  narrativeId: z.string().min(1).optional(),
+  episodeId: z.string().min(1).optional(),
+  beatId: z.string().min(1).optional(),
+  dialogueId: z.string().min(1).optional(),
+  cutsceneId: z.string().min(1).optional(),
+  assetId: z.string().min(1).optional(),
+  fieldPath: z.string().min(1).optional()
+})
+
 export const ContentIssueSchema = z.object({
   id: z.string().min(1),
   severity: ContentIssueSeveritySchema,
   type: SelContentIssueTypeSchema,
-  location: z.object({
-    questId: z.string().min(1),
-    stageId: z.string().min(1).optional(),
-    activityId: z.string().min(1).optional(),
-    fieldPath: z.string().min(1).optional()
-  }),
+  location: ContentIssueLocationSchema,
   explanation: z.string().min(1),
   suggestedFix: z.string().min(1).optional(),
   blocksPublishing: z.boolean()
@@ -257,6 +270,7 @@ export const ArchivedContentExpertReviewSchema = z.object({
 export type AuthoringState = z.infer<typeof AuthoringStateSchema>
 export type SelContentIssueType = z.infer<typeof SelContentIssueTypeSchema>
 export type ContentIssueSeverity = z.infer<typeof ContentIssueSeveritySchema>
+export type ContentIssueLocation = z.infer<typeof ContentIssueLocationSchema>
 export type ContentIssue = z.infer<typeof ContentIssueSchema>
 export type ValidationRun = z.infer<typeof ValidationRunSchema>
 export type ContentValidationReport = z.infer<
