@@ -57,6 +57,13 @@ export interface AuthoringReviewSurfaceInput {
   usesAssetRepresentation?: boolean
 }
 
+export interface ContentBundleHashInput {
+  quest: QuestDefinition
+  world?: unknown | null
+  narrative?: unknown | null
+  assetManifest?: unknown | null
+}
+
 export interface AuthoringEvidenceIssue {
   severity: 'error' | 'warning'
   code:
@@ -80,16 +87,18 @@ export function createAuthoringSnapshot(input: {
   expertReviews?: ContentExpertReview[]
   reviewPolicy?: ContentReviewPolicy
   reviewSurface?: AuthoringReviewSurfaceInput
+  expectedContentHash?: string
 }): AuthoringSnapshot {
   const expertReviews = input.expertReviews ?? []
   const reviewPolicy =
     input.reviewPolicy ?? createContentReviewPolicy(input.reviewSurface)
-  const contentHash = createQuestContentHash(input.quest)
+  const contentHash = getExpectedContentHash(input)
   const state = deriveAuthoringState({
     quest: input.quest,
     validationReport: input.validationReport,
     expertReviews,
-    reviewPolicy
+    reviewPolicy,
+    expectedContentHash: contentHash
   })
 
   return {
@@ -103,7 +112,8 @@ export function createAuthoringSnapshot(input: {
       quest: input.quest,
       validationReport: input.validationReport,
       expertReviews,
-      reviewPolicy
+      reviewPolicy,
+      expectedContentHash: contentHash
     })
   }
 }
@@ -114,14 +124,16 @@ export function deriveAuthoringState(input: {
   expertReviews?: ContentExpertReview[]
   reviewPolicy?: ContentReviewPolicy
   reviewSurface?: AuthoringReviewSurfaceInput
+  expectedContentHash?: string
 }): AuthoringState {
   const reviewPolicy =
     input.reviewPolicy ?? createContentReviewPolicy(input.reviewSurface)
+  const expectedContentHash = getExpectedContentHash(input)
 
   if (input.quest.status === 'archived') return 'archived'
   if (!input.validationReport) return 'drafting'
 
-  if (!reportMatchesQuest(input.quest, input.validationReport)) {
+  if (!reportMatchesQuest(input.quest, input.validationReport, expectedContentHash)) {
     return 'auto_validation_failed'
   }
 
@@ -135,7 +147,8 @@ export function deriveAuthoringState(input: {
 
   const matchingExpertReviews = getMatchingExpertReviews(
     input.quest,
-    input.expertReviews ?? []
+    input.expertReviews ?? [],
+    expectedContentHash
   )
 
   if (matchingExpertReviews.length === 0) {
@@ -155,7 +168,7 @@ export function deriveAuthoringState(input: {
     !isExpertReviewPublishable({
       contentItemId: input.quest.id,
       contentVersion: input.quest.version,
-      expectedContentHash: createQuestContentHash(input.quest),
+      expectedContentHash,
       reviews: matchingExpertReviews,
       policy: reviewPolicy
     })
@@ -172,9 +185,11 @@ export function getAuthoringPublishabilityReasons(input: {
   expertReviews?: ContentExpertReview[]
   reviewPolicy?: ContentReviewPolicy
   reviewSurface?: AuthoringReviewSurfaceInput
+  expectedContentHash?: string
 }) {
   const reviewPolicy =
     input.reviewPolicy ?? createContentReviewPolicy(input.reviewSurface)
+  const expectedContentHash = getExpectedContentHash(input)
   const reasons: string[] = []
 
   if (input.quest.status !== 'published') {
@@ -196,14 +211,14 @@ export function getAuthoringPublishabilityReasons(input: {
 
   reasons.push(
     ...getContentPublishabilityReasons(input.validationReport, {
-      expectedContentHash: createQuestContentHash(input.quest)
+      expectedContentHash
     })
   )
   reasons.push(
     ...getExpertReviewPublishabilityReasons({
       contentItemId: input.quest.id,
       contentVersion: input.quest.version,
-      expectedContentHash: createQuestContentHash(input.quest),
+      expectedContentHash,
       reviews: input.expertReviews ?? [],
       policy: reviewPolicy
     })
@@ -242,8 +257,9 @@ export function auditAuthoringEvidence(input: {
   expertReviews?: ContentExpertReview[]
   reviewPolicy?: ContentReviewPolicy
   reviewSurface?: AuthoringReviewSurfaceInput
+  expectedContentHash?: string
 }): AuthoringEvidenceIssue[] {
-  const contentHash = createQuestContentHash(input.quest)
+  const contentHash = getExpectedContentHash(input)
   const issues: AuthoringEvidenceIssue[] = []
 
   if (!input.validationReport) {
@@ -280,29 +296,56 @@ export function auditAuthoringEvidence(input: {
 
 function reportMatchesQuest(
   quest: QuestDefinition,
-  report: ContentValidationReport
+  report: ContentValidationReport,
+  expectedContentHash = createQuestContentHash(quest)
 ) {
   return (
     report.contentItemId === quest.id &&
     report.contentVersion === quest.version &&
-    report.contentHash === createQuestContentHash(quest)
+    report.contentHash === expectedContentHash
   )
 }
 
 function getMatchingExpertReviews(
   quest: QuestDefinition,
-  reviews: ContentExpertReview[]
+  reviews: ContentExpertReview[],
+  expectedContentHash = createQuestContentHash(quest)
 ) {
   return reviews.filter(
     (review) =>
       review.contentItemId === quest.id &&
       review.contentVersion === quest.version &&
-      review.contentHash === createQuestContentHash(quest)
+      review.contentHash === expectedContentHash
   )
 }
 
-function createQuestContentHash(quest: QuestDefinition) {
+export function createQuestContentHash(quest: QuestDefinition) {
   return createContentHash(quest, { omitTopLevelKeys: ['status'] })
+}
+
+export function createContentBundleHash(input: ContentBundleHashInput) {
+  const hasSupplementalContent =
+    input.world != null || input.narrative != null || input.assetManifest != null
+
+  if (!hasSupplementalContent) {
+    return createQuestContentHash(input.quest)
+  }
+
+  const { status: _status, ...questContent } = input.quest
+
+  return createContentHash({
+    quest: questContent,
+    world: input.world ?? null,
+    narrative: input.narrative ?? null,
+    assetManifest: input.assetManifest ?? null
+  })
+}
+
+function getExpectedContentHash(input: {
+  quest: QuestDefinition
+  expectedContentHash?: string
+}) {
+  return input.expectedContentHash ?? createQuestContentHash(input.quest)
 }
 
 function auditValidationReport(
@@ -336,7 +379,7 @@ function auditValidationReport(
     issues.push(
       createEvidenceIssue(quest, {
         code: 'validation_report_hash_mismatch',
-        message: 'Validation report content hash does not match quest content hash.',
+        message: 'Validation report content hash does not match expected content hash.',
         evidenceId: report.id
       })
     )
@@ -376,7 +419,7 @@ function auditExpertReview(
     issues.push(
       createEvidenceIssue(quest, {
         code: 'expert_review_hash_mismatch',
-        message: 'Expert review content hash does not match quest content hash.',
+        message: 'Expert review content hash does not match expected content hash.',
         evidenceId: review.id
       })
     )

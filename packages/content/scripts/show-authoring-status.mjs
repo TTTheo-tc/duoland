@@ -12,6 +12,7 @@ import {
 import {
   assertQuestDirectorySlug,
   assertSupplementalContentEvidence,
+  getContentBundleHash,
   getRequestedQuestDirs,
   getValidationReportDriftIssues,
   readJsonIfExists,
@@ -73,26 +74,39 @@ async function readAuthoringStatus(slug, questDir) {
     usesWorldNarrative: Boolean(worldJson || narrativeJson),
     usesAssetRepresentation: Boolean(assetManifestJson)
   }
+  const supplementalContent = { worldJson, narrativeJson, assetManifestJson }
   const supplementalEvidenceIssues = getSupplementalEvidenceIssues({
     quest,
     worldJson,
     narrativeJson,
     assetManifestJson
   })
+  const expectedContentHash =
+    supplementalEvidenceIssues.length === 0
+      ? getContentBundleHash(quest, supplementalContent)
+      : validationReport?.contentHash
   const snapshot = createAuthoringSnapshot({
     quest,
     validationReport,
     expertReviews,
-    reviewSurface
+    reviewSurface,
+    expectedContentHash
   })
   const evidenceIssues = auditAuthoringEvidence({
     quest,
     validationReport,
     expertReviews,
-    reviewSurface
+    reviewSurface,
+    expectedContentHash
   })
   const validationDriftIssues = validationReport
-    ? getValidationReportDriftIssues(quest, validationReport)
+    ? supplementalEvidenceIssues.length === 0
+      ? getValidationReportDriftIssues(
+          quest,
+          validationReport,
+          supplementalContent
+        )
+      : []
     : []
 
   return {

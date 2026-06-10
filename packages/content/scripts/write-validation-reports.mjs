@@ -1,34 +1,60 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { validateQuestDefinition } from '@sel-quest/quest-core'
-import { validateSelQuestContent } from '@sel-quest/content-validation'
 import {
   assertQuestDirectorySlug,
+  assertSupplementalContentEvidence,
+  createContentBundleValidationReport,
   getRequestedQuestDirs,
   mergeDeterministicBaselineReport,
-  readJsonIfExists
+  readJsonIfExists,
+  readSupplementalContentJson,
+  structuredErrorMessages
 } from './script-utils.mjs'
 
 const requestedSlugs = process.argv.slice(2)
 const questDirs = await getRequestedQuestDirs(requestedSlugs)
 
 const generatedReports = []
+let hasFailure = false
 
 for (const { slug, questDir } of questDirs) {
   const questPath = path.join(questDir, 'quest.json')
   const reportPath = path.join(questDir, 'validation-report.json')
   const quest = validateQuestDefinition(JSON.parse(await readFile(questPath, 'utf8')))
   assertQuestDirectorySlug(quest, slug)
+  const supplementalContent = await readSupplementalContentJson(questDir)
+
+  try {
+    assertSupplementalContentEvidence(
+      quest,
+      supplementalContent.worldJson,
+      supplementalContent.narrativeJson,
+      supplementalContent.assetManifestJson
+    )
+  } catch (error) {
+    hasFailure = true
+    console.error(`${slug}: content evidence audit failed`)
+    for (const message of structuredErrorMessages(error)) {
+      console.error(`- ${message}`)
+    }
+    continue
+  }
+
   const existingReport = await readJsonIfExists(reportPath)
   const createdAt =
     process.env.CONTENT_VALIDATION_NOW ??
     existingReport?.createdAt ??
     new Date().toISOString()
 
-  const baselineReport = validateSelQuestContent(quest, {
-    now: () => createdAt,
-    reportId: existingReport?.id ?? `report_${quest.id}_${quest.version}_rules`
-  })
+  const baselineReport = createContentBundleValidationReport(
+    quest,
+    supplementalContent,
+    {
+      now: () => createdAt,
+      reportId: existingReport?.id ?? `report_${quest.id}_${quest.version}_rules`
+    }
+  )
   const report = mergeDeterministicBaselineReport(existingReport, baselineReport)
 
   await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`)
@@ -43,6 +69,6 @@ const blockingReports = generatedReports.filter(({ report }) =>
   report.issues.some((issue) => issue.blocksPublishing)
 )
 
-if (blockingReports.length > 0) {
+if (blockingReports.length > 0 || hasFailure) {
   process.exitCode = 1
 }

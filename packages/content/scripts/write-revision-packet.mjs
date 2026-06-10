@@ -9,10 +9,14 @@ import {
 } from '@sel-quest/review-core'
 import {
   assertQuestDirectorySlug,
+  assertSupplementalContentEvidence,
+  getContentBundleHash,
   getQuestDir,
   getQuestSlugArg,
   getValidationReportDriftIssues,
-  printValidationReportDrift
+  printValidationReportDrift,
+  readSupplementalContentJson,
+  structuredErrorMessages
 } from './script-utils.mjs'
 
 const args = process.argv.slice(2)
@@ -38,11 +42,29 @@ const validationReport = validateContentValidationReport(
 const expertReviews = JSON.parse(
   await readFile(path.join(questDir, 'expert-reviews.json'), 'utf8')
 ).map((review) => validateContentExpertReview(review))
+const supplementalContent = await readSupplementalContentJson(questDir)
+try {
+  assertSupplementalContentEvidence(
+    quest,
+    supplementalContent.worldJson,
+    supplementalContent.narrativeJson,
+    supplementalContent.assetManifestJson
+  )
+} catch (error) {
+  console.error(`${slug}: content evidence audit failed`)
+  for (const message of structuredErrorMessages(error)) {
+    console.error(`- ${message}`)
+  }
+  process.exit(1)
+}
+
+const expectedContentHash = getContentBundleHash(quest, supplementalContent)
 
 const evidenceIssues = auditAuthoringEvidence({
   quest,
   validationReport,
-  expertReviews
+  expertReviews,
+  expectedContentHash
 })
 
 if (evidenceIssues.length > 0) {
@@ -53,7 +75,11 @@ if (evidenceIssues.length > 0) {
   process.exit(1)
 }
 
-const driftIssues = getValidationReportDriftIssues(quest, validationReport)
+const driftIssues = getValidationReportDriftIssues(
+  quest,
+  validationReport,
+  supplementalContent
+)
 
 if (driftIssues.length > 0) {
   printValidationReportDrift(slug, driftIssues)

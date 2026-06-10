@@ -4,7 +4,9 @@ import { validateContentValidationReport } from '@sel-quest/review-core'
 import { describe, expect, it } from 'vitest'
 import {
   runContentScript,
+  validAssetManifest,
   validQuest,
+  validWorld,
   writeQuestFixture
 } from './test-fixtures'
 
@@ -75,6 +77,53 @@ describe('content validation command', () => {
 
     expect(result.exitCode).toBe(0)
     expect(report.validators).toContainEqual(extraValidator)
+  })
+
+  it('refreshes bundle hashes when supplemental content changes', async () => {
+    const { questsRoot, validationReport } = await writeQuestFixture({
+      quest: validQuest,
+      world: validWorld,
+      assetManifest: validAssetManifest
+    })
+    const questDir = path.join(questsRoot, 'test-quest')
+    const reportPath = path.join(questDir, 'validation-report.json')
+    await writeFile(
+      path.join(questDir, 'world.json'),
+      `${JSON.stringify(
+        {
+          ...validWorld,
+          title: 'Changed Test World'
+        },
+        null,
+        2
+      )}\n`
+    )
+
+    const result = await runValidate(questsRoot, ['test-quest'])
+    const report = validateContentValidationReport(
+      JSON.parse(await readFile(reportPath, 'utf8'))
+    )
+
+    expect(result.exitCode).toBe(0)
+    expect(report.contentHash).not.toBe(validationReport.contentHash)
+  })
+
+  it('returns structured evidence errors for malformed supplemental content', async () => {
+    const { questsRoot } = await writeQuestFixture({
+      quest: validQuest,
+      world: validWorld,
+      assetManifest: validAssetManifest
+    })
+    await writeFile(
+      path.join(questsRoot, 'test-quest', 'world.json'),
+      `${JSON.stringify(false, null, 2)}\n`
+    )
+
+    const result = await runValidate(questsRoot, ['test-quest'])
+
+    expect(result.exitCode).toBe(1)
+    expect(result.stderr).toContain('test-quest: content evidence audit failed')
+    expect(result.stderr).toContain('schema')
   })
 
   it('writes blocking reports and exits nonzero for blocking content', async () => {

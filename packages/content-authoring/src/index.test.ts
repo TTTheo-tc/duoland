@@ -8,6 +8,7 @@ import { createContentHash } from '@sel-quest/review-core'
 import {
   auditAuthoringEvidence,
   createAuthoringSnapshot,
+  createContentBundleHash,
   deriveAuthoringState,
   createContentReviewPolicy,
   getAuthoringPublishabilityReasons
@@ -292,6 +293,12 @@ describe('content-authoring', () => {
       'missing review coverage section safety_policy',
       'missing review coverage section activity_feedback'
     ])
+  })
+
+  it('does not treat falsy supplemental bundle markers as absent content', () => {
+    expect(createContentBundleHash({ quest, world: false })).not.toBe(
+      createContentBundleHash({ quest })
+    )
   })
 
   it('reports missing validation evidence before expert review evidence', () => {

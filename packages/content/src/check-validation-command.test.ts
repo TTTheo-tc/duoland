@@ -4,13 +4,39 @@ import { validateContentValidationReport } from '@sel-quest/review-core'
 import { describe, expect, it } from 'vitest'
 import {
   runContentScript,
+  validAssetManifest,
   validQuest,
+  validWorld,
   writeQuestFixture
 } from './test-fixtures'
 
 describe('content check validation command', () => {
   it('passes when persisted validation reports are up to date', async () => {
     const { questsRoot } = await writeQuestFixture({ quest: validQuest })
+
+    const result = await runCheckValidation(questsRoot, ['test-quest'])
+
+    expect(result.exitCode).toBe(0)
+    expect(result.stdout).toContain('test-quest: validation report up to date')
+  })
+
+  it('hashes normalized supplemental content rather than raw unknown fields', async () => {
+    const { questsRoot } = await writeQuestFixture({
+      quest: validQuest,
+      world: validWorld,
+      assetManifest: validAssetManifest
+    })
+    await writeFile(
+      path.join(questsRoot, 'test-quest', 'world.json'),
+      `${JSON.stringify(
+        {
+          ...validWorld,
+          unknownAuthoringNote: 'ignored by the world schema'
+        },
+        null,
+        2
+      )}\n`
+    )
 
     const result = await runCheckValidation(questsRoot, ['test-quest'])
 
@@ -79,6 +105,48 @@ describe('content check validation command', () => {
     expect(result.exitCode).toBe(1)
     expect(result.stderr).toContain('test-quest: validation report is out of date')
     expect(reportAfterCheck.status).toBe('blocked')
+  })
+
+  it('fails when supplemental content changes without refreshing validation', async () => {
+    const { questsRoot } = await writeQuestFixture({
+      quest: validQuest,
+      world: validWorld,
+      assetManifest: validAssetManifest
+    })
+    await writeFile(
+      path.join(questsRoot, 'test-quest', 'world.json'),
+      `${JSON.stringify(
+        {
+          ...validWorld,
+          title: 'Changed Test World'
+        },
+        null,
+        2
+      )}\n`
+    )
+
+    const result = await runCheckValidation(questsRoot, ['test-quest'])
+
+    expect(result.exitCode).toBe(1)
+    expect(result.stderr).toContain('test-quest: validation report is out of date')
+  })
+
+  it('returns structured evidence errors for malformed supplemental content', async () => {
+    const { questsRoot } = await writeQuestFixture({
+      quest: validQuest,
+      world: validWorld,
+      assetManifest: validAssetManifest
+    })
+    await writeFile(
+      path.join(questsRoot, 'test-quest', 'world.json'),
+      `${JSON.stringify(false, null, 2)}\n`
+    )
+
+    const result = await runCheckValidation(questsRoot, ['test-quest'])
+
+    expect(result.exitCode).toBe(1)
+    expect(result.stderr).toContain('test-quest: content evidence audit failed')
+    expect(result.stderr).toContain('schema')
   })
 
   it('returns nonzero for up-to-date reports with blocking issues', async () => {

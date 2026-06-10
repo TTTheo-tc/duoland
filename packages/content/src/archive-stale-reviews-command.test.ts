@@ -97,7 +97,7 @@ describe('content archive stale reviews command', () => {
 
     expect(result.exitCode).not.toBe(0)
     expect(result.stderr).toContain(
-      'validation report content hash does not match quest content hash'
+      'validation report content hash does not match expected content hash'
     )
     expect(expertReviews).toEqual([oldReview])
   })

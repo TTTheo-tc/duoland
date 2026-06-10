@@ -423,8 +423,8 @@ describe('review-core', () => {
         reviews: requiredApprovalReviews
       })
     ).toEqual([
-      'expert review expert_review_teacher_001 content hash does not match quest content hash',
-      'expert review expert_review_safety_001 content hash does not match quest content hash',
+      'expert review expert_review_teacher_001 content hash does not match expected content hash',
+      'expert review expert_review_safety_001 content hash does not match expected content hash',
       'missing expert approval',
       'requires at least 2 approved expert reviews',
       'requires at least 2 distinct approving reviewers',

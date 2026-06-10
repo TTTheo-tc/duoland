@@ -116,8 +116,11 @@ export function createContentRefinementRequest(input: {
   revisionPacket: ContentRevisionPacket
   now?: () => string
   planId?: string
+  expectedContentHash?: string
 }): ContentRefinementRequest {
-  assertRevisionPacketMatchesQuest(input.quest, input.revisionPacket)
+  assertRevisionPacketMatchesQuest(input.quest, input.revisionPacket, {
+    expectedContentHash: input.expectedContentHash
+  })
 
   return {
     quest: input.quest,
@@ -225,11 +228,12 @@ export function validateContentRevisionPacketIntegrity(
 
 export function assertRevisionPacketMatchesQuest(
   quest: QuestDefinition,
-  packet: ContentRevisionPacket
+  packet: ContentRevisionPacket,
+  options: { expectedContentHash?: string } = {}
 ) {
   validateContentRevisionPacketIntegrity(packet)
 
-  const contentHash = createQuestContentHash(quest)
+  const contentHash = options.expectedContentHash ?? createQuestContentHash(quest)
 
   if (packet.contentItemId !== quest.id) {
     throw new Error('Revision packet content id does not match quest id.')
@@ -240,7 +244,7 @@ export function assertRevisionPacketMatchesQuest(
   }
 
   if (packet.contentHash !== contentHash) {
-    throw new Error('Revision packet content hash does not match quest content hash.')
+    throw new Error('Revision packet content hash does not match expected content hash.')
   }
 }
 
