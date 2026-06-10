@@ -14,10 +14,12 @@ import { useQuestRuntime } from './useQuestRuntime'
 
 export function QuestPlayer({
   quest,
-  activityRegistry
+  activityRegistry,
+  mode = 'published'
 }: {
   quest: QuestDefinition
   activityRegistry?: ActivityRegistry
+  mode?: 'published' | 'preview'
 }) {
   const { loadProgress, persistSnapshot, resetProgress } = useQuestPersistence(quest)
   const { actor, snapshot, isReady } = useQuestRuntime(quest, loadProgress)
@@ -56,6 +58,7 @@ export function QuestPlayer({
   if (!isReady || !actor || !snapshot || !context || !questState) {
     return (
       <main className="quest-shell">
+        {mode === 'preview' ? <PreviewNotice /> : null}
         <div className="loading-card">任务加载中...</div>
       </main>
     )
@@ -69,6 +72,8 @@ export function QuestPlayer({
 
   return (
     <main className="quest-shell">
+      {mode === 'preview' ? <PreviewNotice /> : null}
+
       <header className="quest-topbar">
         <div>
           <p className="eyebrow">{quest.ageBand} · {quest.estimatedMinutes} 分钟</p>
@@ -141,5 +146,14 @@ export function QuestPlayer({
         <QuestDebugPanel snapshot={snapshot} events={context.events} />
       ) : null}
     </main>
+  )
+}
+
+function PreviewNotice() {
+  return (
+    <section className="preview-notice" aria-label="开发预览说明">
+      <strong>开发预览</strong>
+      <span>此内容尚未完成专家审核，不能代表发布版本。</span>
+    </section>
   )
 }

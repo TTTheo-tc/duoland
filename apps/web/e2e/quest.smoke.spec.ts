@@ -12,6 +12,9 @@ test('does not expose draft quests on the public runtime route', async ({ page }
 test('runs the emotion detective quest to completion', async ({ page }) => {
   await openFreshQuest(page)
 
+  await expect(page.getByLabel('开发预览说明')).toContainText(
+    '此内容尚未完成专家审核，不能代表发布版本。'
+  )
   await expect(page.getByRole('heading', { name: '情绪侦探' })).toBeVisible()
   await expect(page.locator('.phaser-container canvas')).toBeVisible()
 
@@ -54,6 +57,9 @@ test('loads the quest on a mobile viewport', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await openFreshQuest(page)
 
+  const previewNotice = page.getByLabel('开发预览说明')
+  await expect(previewNotice).toBeVisible()
+  await expectPreviewNoticeFitsViewport(page)
   await expect(page.getByRole('heading', { name: '情绪侦探' })).toBeVisible()
   await expect(page.getByRole('button', { name: '继续', exact: true })).toBeVisible()
   await expect(page.locator('.phaser-container canvas')).toBeVisible()
@@ -110,6 +116,17 @@ async function readSelectedEmotionIds(page: Page) {
     if (!raw) return []
     return JSON.parse(raw).activityState?.emotion_choice_001?.selectedEmotionIds ?? []
   }, progressKey)
+}
+
+async function expectPreviewNoticeFitsViewport(page: Page) {
+  await expect
+    .poll(() =>
+      page.getByLabel('开发预览说明').evaluate((element) => {
+        const rect = element.getBoundingClientRect()
+        return rect.left >= 0 && rect.right <= window.innerWidth
+      })
+    )
+    .toBe(true)
 }
 
 async function expectNonBlankWebglCanvas(page: Page) {
