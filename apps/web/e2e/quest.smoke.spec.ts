@@ -71,15 +71,19 @@ test('renders and interacts with the R3F world playground', async ({ page }) => 
   const canvas = page.locator('.r3f-world-shell canvas')
   await expect(canvas).toBeVisible()
   await expectNonBlankWebglCanvas(page)
+  await expect(page.getByText('beat_observe_drawing')).toBeVisible()
+  await expect(
+    page.getByText('wait_for_interactable:crumpled_drawing')
+  ).toBeVisible()
 
-  const box = await canvas.boundingBox()
-  expect(box).not.toBeNull()
-  if (!box) {
-    throw new Error('R3F canvas bounding box missing')
-  }
+  await page.getByRole('button', { name: '触发小宇' }).click()
+  await expect(page.getByText('INTERACTABLE_CLICKED:xiaoyu_npc')).toBeVisible()
+  await expect(page.getByText('start_activity:dialogue_intro')).toBeVisible()
+  await expect(page.getByText('beat_observe_drawing')).toBeVisible()
 
-  await page.mouse.click(box.x + box.width / 2, box.y + box.height * 0.58)
-  await expect(page.getByText('xiaoyu_npc')).toBeVisible()
+  await page.getByRole('button', { name: '触发当前线索' }).click()
+  await expect(page.getByText('beat_emotion_choice')).toBeVisible()
+  await expect(page.getByText('start_activity:emotion_choice_001')).toBeVisible()
 })
 
 test('loads the R3F world playground on a mobile viewport', async ({ page }) => {
