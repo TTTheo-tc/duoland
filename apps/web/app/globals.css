@@ -524,6 +524,11 @@ p {
   overflow-wrap: anywhere;
 }
 
+.world-debug-actions {
+  display: grid;
+  gap: 10px;
+}
+
 @media (max-width: 840px) {
   .home-shell,
   .page-shell,
