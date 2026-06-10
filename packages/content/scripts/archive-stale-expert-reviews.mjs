@@ -8,15 +8,13 @@ import {
 } from '@sel-quest/review-core'
 import {
   assertQuestDirectorySlug,
-  assertSupplementalContentEvidence,
   getContentBundleHash,
   getQuestDir,
   getQuestSlugArg,
   getValidationReportDriftIssues,
   printValidationReportDrift,
   readJsonIfExists,
-  readSupplementalContentJson,
-  structuredErrorMessages
+  readSupplementalContentJson
 } from './script-utils.mjs'
 
 const args = process.argv.slice(2)
@@ -43,22 +41,19 @@ const archivedReviews = (await readJsonIfExists(archivedReviewsPath) ?? []).map(
   (review) => validateArchivedContentExpertReview(review)
 )
 const supplementalContent = await readSupplementalContentJson(questDir)
-try {
-  assertSupplementalContentEvidence(
-    quest,
-    supplementalContent.worldJson,
-    supplementalContent.narrativeJson,
-    supplementalContent.assetManifestJson
-  )
-} catch (error) {
-  console.error(`${slug}: content evidence audit failed`)
-  for (const message of structuredErrorMessages(error)) {
-    console.error(`- ${message}`)
-  }
+
+const currentContentHash = getContentBundleHash(quest, supplementalContent)
+const driftIssues = getValidationReportDriftIssues(
+  quest,
+  validationReport,
+  supplementalContent
+)
+
+if (driftIssues.length > 0) {
+  printValidationReportDrift(slug, driftIssues)
   process.exit(1)
 }
 
-const currentContentHash = getContentBundleHash(quest, supplementalContent)
 const validationIssues = validateCurrentValidationEvidence({
   quest,
   validationReport,
@@ -70,17 +65,6 @@ if (validationIssues.length > 0) {
   for (const issue of validationIssues) {
     console.error(`- ${issue}`)
   }
-  process.exit(1)
-}
-
-const driftIssues = getValidationReportDriftIssues(
-  quest,
-  validationReport,
-  supplementalContent
-)
-
-if (driftIssues.length > 0) {
-  printValidationReportDrift(slug, driftIssues)
   process.exit(1)
 }
 

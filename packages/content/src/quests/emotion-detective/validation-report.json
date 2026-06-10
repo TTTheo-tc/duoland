@@ -13,6 +13,15 @@
       "startedAt": "2026-06-09T00:00:00.000Z",
       "completedAt": "2026-06-09T00:00:00.000Z",
       "summary": "Rule-based SEL content validation passed."
+    },
+    {
+      "id": "run_emotion-detective_1.0.0_supplemental",
+      "validatorId": "rule.supplemental_content_evidence",
+      "validatorType": "rule",
+      "status": "passed",
+      "startedAt": "2026-06-09T00:00:00.000Z",
+      "completedAt": "2026-06-09T00:00:00.000Z",
+      "summary": "Supplemental content evidence validation passed."
     }
   ],
   "issues": [],

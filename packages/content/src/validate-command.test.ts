@@ -108,22 +108,74 @@ describe('content validation command', () => {
     expect(report.contentHash).not.toBe(validationReport.contentHash)
   })
 
-  it('returns structured evidence errors for malformed supplemental content', async () => {
+  it('writes validation report issues for malformed supplemental content', async () => {
     const { questsRoot } = await writeQuestFixture({
       quest: validQuest,
       world: validWorld,
       assetManifest: validAssetManifest
     })
+    const reportPath = path.join(
+      questsRoot,
+      'test-quest',
+      'validation-report.json'
+    )
     await writeFile(
       path.join(questsRoot, 'test-quest', 'world.json'),
       `${JSON.stringify(false, null, 2)}\n`
     )
 
     const result = await runValidate(questsRoot, ['test-quest'])
+    const report = validateContentValidationReport(
+      JSON.parse(await readFile(reportPath, 'utf8'))
+    )
 
     expect(result.exitCode).toBe(1)
-    expect(result.stderr).toContain('test-quest: content evidence audit failed')
-    expect(result.stderr).toContain('schema')
+    expect(result.stdout).toContain('test-quest: needs_major_revision (2 issue(s))')
+    expect(
+      report.issues.some(
+        (issue) =>
+          issue.explanation.includes('[invalid_type]') &&
+          issue.location.fieldPath === 'world' &&
+          issue.blocksPublishing
+      )
+    ).toBe(true)
+  })
+
+  it('writes nonblocking validation report issues for supplemental warnings', async () => {
+    const warningAssetManifest = {
+      ...validAssetManifest,
+      assets: validAssetManifest.assets.map((asset) =>
+        asset.id === 'model_test_character'
+          ? {
+              ...asset,
+              uri: '/placeholder-character.glb'
+            }
+          : asset
+      )
+    }
+    const { questsRoot } = await writeQuestFixture({
+      quest: validQuest,
+      world: validWorld,
+      assetManifest: warningAssetManifest
+    })
+    const reportPath = path.join(
+      questsRoot,
+      'test-quest',
+      'validation-report.json'
+    )
+
+    const result = await runValidate(questsRoot, ['test-quest'])
+    const report = validateContentValidationReport(
+      JSON.parse(await readFile(reportPath, 'utf8'))
+    )
+
+    expect(result.exitCode).toBe(0)
+    expect(result.stdout).toContain('test-quest: needs_minor_revision (1 issue(s))')
+    expect(report.issues[0]).toMatchObject({
+      severity: 'minor',
+      blocksPublishing: false
+    })
+    expect(report.issues[0].explanation).toContain('placeholder_asset_has_uri')
   })
 
   it('writes blocking reports and exits nonzero for blocking content', async () => {

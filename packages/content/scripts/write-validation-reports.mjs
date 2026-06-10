@@ -3,20 +3,17 @@ import path from 'node:path'
 import { validateQuestDefinition } from '@sel-quest/quest-core'
 import {
   assertQuestDirectorySlug,
-  assertSupplementalContentEvidence,
   createContentBundleValidationReport,
   getRequestedQuestDirs,
   mergeDeterministicBaselineReport,
   readJsonIfExists,
-  readSupplementalContentJson,
-  structuredErrorMessages
+  readSupplementalContentJson
 } from './script-utils.mjs'
 
 const requestedSlugs = process.argv.slice(2)
 const questDirs = await getRequestedQuestDirs(requestedSlugs)
 
 const generatedReports = []
-let hasFailure = false
 
 for (const { slug, questDir } of questDirs) {
   const questPath = path.join(questDir, 'quest.json')
@@ -24,23 +21,6 @@ for (const { slug, questDir } of questDirs) {
   const quest = validateQuestDefinition(JSON.parse(await readFile(questPath, 'utf8')))
   assertQuestDirectorySlug(quest, slug)
   const supplementalContent = await readSupplementalContentJson(questDir)
-
-  try {
-    assertSupplementalContentEvidence(
-      quest,
-      supplementalContent.worldJson,
-      supplementalContent.narrativeJson,
-      supplementalContent.assetManifestJson
-    )
-  } catch (error) {
-    hasFailure = true
-    console.error(`${slug}: content evidence audit failed`)
-    for (const message of structuredErrorMessages(error)) {
-      console.error(`- ${message}`)
-    }
-    continue
-  }
-
   const existingReport = await readJsonIfExists(reportPath)
   const createdAt =
     process.env.CONTENT_VALIDATION_NOW ??
@@ -69,6 +49,6 @@ const blockingReports = generatedReports.filter(({ report }) =>
   report.issues.some((issue) => issue.blocksPublishing)
 )
 
-if (blockingReports.length > 0 || hasFailure) {
+if (blockingReports.length > 0) {
   process.exitCode = 1
 }

@@ -134,7 +134,7 @@ describe('content review packet command', () => {
     })
 
     expect(result.exitCode).not.toBe(0)
-    expect(result.stderr).toContain('validation_report_hash_mismatch')
+    expect(result.stderr).toContain('validation report is out of date')
   })
 
   it('fails when validation report content drifts without a hash change', async () => {
