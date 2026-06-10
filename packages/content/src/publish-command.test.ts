@@ -1,5 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import { createContentBundleHash } from '@sel-quest/content-authoring'
 import { describe, expect, it } from 'vitest'
 import {
   createRequiredApprovedReviews,
@@ -64,7 +65,12 @@ describe('content publish command', () => {
     const { questsRoot } = await writeQuestFixture({
       quest: worldBoundQuest,
       expertReviews: createRequiredApprovedReviews(worldBoundQuest, {
-        extraReviewedSections: ['world_narrative', 'asset_representation']
+        extraReviewedSections: ['world_narrative', 'asset_representation'],
+        contentHash: createContentBundleHash({
+          quest: worldBoundQuest,
+          world: validWorld,
+          assetManifest: validAssetManifest
+        })
       }),
       world: validWorld,
       assetManifest: validAssetManifest
@@ -86,7 +92,13 @@ describe('content publish command', () => {
     }
     const { questsRoot } = await writeQuestFixture({
       quest: worldBoundQuest,
-      expertReviews: createRequiredApprovedReviews(worldBoundQuest),
+      expertReviews: createRequiredApprovedReviews(worldBoundQuest, {
+        contentHash: createContentBundleHash({
+          quest: worldBoundQuest,
+          world: validWorld,
+          assetManifest: validAssetManifest
+        })
+      }),
       world: validWorld,
       assetManifest: validAssetManifest
     })

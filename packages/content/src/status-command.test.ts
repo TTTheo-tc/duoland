@@ -1,5 +1,6 @@
 import { writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import { createContentBundleHash } from '@sel-quest/content-authoring'
 import { describe, expect, it } from 'vitest'
 import {
   createRequiredApprovedReviews,
@@ -115,29 +116,36 @@ describe('content status command', () => {
       ...validQuest,
       episodeIds: ['episode_test']
     }
+    const invalidNarrative = {
+      ...validNarrative,
+      episodes: [
+        {
+          ...validNarrative.episodes[0],
+          beats: [
+            {
+              id: 'beat_missing_activity',
+              kind: 'activity' as const,
+              activityId: 'missing_activity',
+              learningObjectiveIds: ['lo_emotion_recognition']
+            }
+          ]
+        }
+      ]
+    }
     const { questsRoot } = await writeQuestFixture({
       quest: narrativeQuest,
       expertReviews: createRequiredApprovedReviews(narrativeQuest, {
-        extraReviewedSections: ['world_narrative', 'asset_representation']
+        extraReviewedSections: ['world_narrative', 'asset_representation'],
+        contentHash: createContentBundleHash({
+          quest: narrativeQuest,
+          world: validWorld,
+          assetManifest: validAssetManifest,
+          narrative: invalidNarrative
+        })
       }),
       world: validWorld,
       assetManifest: validAssetManifest,
-      narrative: {
-        ...validNarrative,
-        episodes: [
-          {
-            ...validNarrative.episodes[0],
-            beats: [
-              {
-                id: 'beat_missing_activity',
-                kind: 'activity',
-                activityId: 'missing_activity',
-                learningObjectiveIds: ['lo_emotion_recognition']
-              }
-            ]
-          }
-        ]
-      }
+      narrative: invalidNarrative
     })
 
     const result = await runStatus(questsRoot)

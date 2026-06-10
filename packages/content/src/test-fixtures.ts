@@ -5,6 +5,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 import { validateSelQuestContent } from '@sel-quest/content-validation'
+import { createContentBundleHash } from '@sel-quest/content-authoring'
 import type { QuestDefinition } from '@sel-quest/quest-core'
 import type {
   ContentExpertReview,
@@ -267,9 +268,16 @@ export async function writeQuestFixture(input: {
   const questsRoot = await mkdtemp(path.join(os.tmpdir(), 'sel-quest-content-'))
   const questDir = path.join(questsRoot, input.quest.slug)
   const validationQuest = input.validationQuest ?? input.quest
+  const validationContentHash = createContentBundleHash({
+    quest: validationQuest,
+    world: input.world,
+    narrative: input.narrative,
+    assetManifest: input.assetManifest
+  })
   const validationReport = validateSelQuestContent(validationQuest, {
     now: () => '2026-06-09T00:00:00.000Z',
-    reportId: `report_${validationQuest.id}_${validationQuest.version}_rules`
+    reportId: `report_${validationQuest.id}_${validationQuest.version}_rules`,
+    contentHash: validationContentHash
   })
 
   await mkdir(questDir, { recursive: true })
@@ -309,12 +317,16 @@ export async function writeQuestFixture(input: {
 
 export function createApprovedReview(
   quest: QuestDefinition,
-  options: { extraReviewedSections?: ReviewCoverageSection[] } = {}
+  options: {
+    extraReviewedSections?: ReviewCoverageSection[]
+    contentHash?: string
+  } = {}
 ): ContentExpertReview {
   const validationReport = validateSelQuestContent(quest, {
     now: () => '2026-06-09T00:00:00.000Z',
     reportId: `report_${quest.id}_${quest.version}_rules`
   })
+  const contentHash = options.contentHash ?? validationReport.contentHash
   const reviewedSections = [
     ...new Set<ReviewCoverageSection>([
       'child_content',
@@ -330,7 +342,7 @@ export function createApprovedReview(
     id: `review_${quest.id}_${quest.version}_expert_001`,
     contentItemId: quest.id,
     contentVersion: quest.version,
-    contentHash: validationReport.contentHash,
+    contentHash,
     reviewer: {
       id: 'reviewer_001',
       role: 'child_development_psychologist'
@@ -348,7 +360,10 @@ export function createApprovedReview(
 
 export function createRequiredApprovedReviews(
   quest: QuestDefinition,
-  options: { extraReviewedSections?: ReviewCoverageSection[] } = {}
+  options: {
+    extraReviewedSections?: ReviewCoverageSection[]
+    contentHash?: string
+  } = {}
 ): ContentExpertReview[] {
   const baseReview = createApprovedReview(quest, options)
 

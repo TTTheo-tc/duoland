@@ -12,6 +12,7 @@ import {
 import {
   assertQuestDirectorySlug,
   assertSupplementalContentEvidence,
+  getContentBundleHash,
   getQuestDir,
   getQuestSlugArg,
   getValidationReportDriftIssues,
@@ -46,6 +47,7 @@ const expertReviews = JSON.parse(await readFile(reviewsPath, 'utf8')).map((revie
 const worldJson = await readJsonIfExists(worldPath)
 const narrativeJson = await readJsonIfExists(narrativePath)
 const assetManifestJson = await readJsonIfExists(assetManifestPath)
+const supplementalContent = { worldJson, narrativeJson, assetManifestJson }
 const reviewSurface = {
   usesWorldNarrative: Boolean(worldJson || narrativeJson),
   usesAssetRepresentation: Boolean(assetManifestJson)
@@ -69,11 +71,14 @@ try {
   process.exit(1)
 }
 
+const expectedContentHash = getContentBundleHash(quest, supplementalContent)
+
 const evidenceIssues = auditAuthoringEvidence({
   quest,
   validationReport,
   expertReviews,
-  reviewSurface
+  reviewSurface,
+  expectedContentHash
 })
 
 if (evidenceIssues.length > 0) {
@@ -84,7 +89,11 @@ if (evidenceIssues.length > 0) {
   process.exit(1)
 }
 
-const driftIssues = getValidationReportDriftIssues(quest, validationReport)
+const driftIssues = getValidationReportDriftIssues(
+  quest,
+  validationReport,
+  supplementalContent
+)
 
 if (driftIssues.length > 0) {
   printValidationReportDrift(slug, driftIssues)
@@ -99,7 +108,8 @@ const publishabilityReasons = getAuthoringPublishabilityReasons({
   quest: publishCandidate,
   validationReport,
   expertReviews,
-  reviewSurface
+  reviewSurface,
+  expectedContentHash
 })
 
 if (publishabilityReasons.length > 0) {

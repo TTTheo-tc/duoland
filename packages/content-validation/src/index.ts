@@ -13,6 +13,7 @@ import { createContentHash } from '@sel-quest/review-core'
 export interface ValidateSelQuestContentOptions {
   now?: () => string
   reportId?: string
+  contentHash?: string
 }
 
 interface TextNode {
@@ -58,7 +59,9 @@ export function validateSelQuestContent(
     id: options.reportId ?? `report_${quest.id}_${quest.version}`,
     contentItemId: quest.id,
     contentVersion: quest.version,
-    contentHash: createContentHash(quest, { omitTopLevelKeys: ['status'] }),
+    contentHash:
+      options.contentHash ??
+      createContentHash(quest, { omitTopLevelKeys: ['status'] }),
     status,
     validators: [
       {

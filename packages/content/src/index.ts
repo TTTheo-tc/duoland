@@ -1,6 +1,7 @@
 import {
   auditAuthoringEvidence,
   createAuthoringSnapshot,
+  createContentBundleHash,
   createContentReviewPolicy,
   getAuthoringPublishabilityReasons,
   type AuthoringEvidenceIssue,
@@ -15,7 +16,8 @@ import {
   getQuestNarrativeBySlug,
   getQuestWorldBySlug,
   questEntries,
-  toQuestSummary
+  toQuestSummary,
+  type QuestEntry
 } from './registry'
 
 export function listPublishableQuests() {
@@ -54,7 +56,8 @@ export function getQuestAuthoringSnapshot(slug: string) {
     quest: entry.quest,
     validationReport: entry.validationReport,
     expertReviews: entry.expertReviews,
-    reviewSurface: getQuestReviewSurface(entry)
+    reviewSurface: getQuestReviewSurface(entry),
+    expectedContentHash: getQuestEntryContentHash(entry)
   })
 }
 
@@ -66,7 +69,8 @@ export function listAuthoringQuestSummaries() {
       quest: entry.quest,
       validationReport: entry.validationReport,
       expertReviews: entry.expertReviews,
-      reviewPolicy
+      reviewPolicy,
+      expectedContentHash: getQuestEntryContentHash(entry)
     })
     const currentApprovedReviews = entry.expertReviews.filter(
       (review) =>
@@ -131,7 +135,8 @@ export function getQuestPublishabilityReasons(slug: string) {
     quest: entry.quest,
     validationReport: entry.validationReport,
     expertReviews: entry.expertReviews,
-    reviewSurface: getQuestReviewSurface(entry)
+    reviewSurface: getQuestReviewSurface(entry),
+    expectedContentHash: getQuestEntryContentHash(entry)
   })
 }
 
@@ -141,7 +146,8 @@ export function auditContentEvidence(): AuthoringEvidenceIssue[] {
       quest: entry.quest,
       validationReport: entry.validationReport,
       expertReviews: entry.expertReviews,
-      reviewSurface: getQuestReviewSurface(entry)
+      reviewSurface: getQuestReviewSurface(entry),
+      expectedContentHash: getQuestEntryContentHash(entry)
     })
   )
 }
@@ -155,6 +161,15 @@ function getQuestReviewSurface(entry: {
     usesWorldNarrative: Boolean(entry.world || entry.narrative),
     usesAssetRepresentation: Boolean(entry.assetManifest)
   }
+}
+
+function getQuestEntryContentHash(entry: QuestEntry) {
+  return createContentBundleHash({
+    quest: entry.quest,
+    world: entry.world,
+    narrative: entry.narrative,
+    assetManifest: entry.assetManifest
+  })
 }
 
 export class ContentEvidenceAuditError extends Error {

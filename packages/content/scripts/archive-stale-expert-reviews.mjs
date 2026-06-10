@@ -2,18 +2,21 @@ import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { validateQuestDefinition } from '@sel-quest/quest-core'
 import {
-  createContentHash,
   validateArchivedContentExpertReview,
   validateContentExpertReview,
   validateContentValidationReport
 } from '@sel-quest/review-core'
 import {
   assertQuestDirectorySlug,
+  assertSupplementalContentEvidence,
+  getContentBundleHash,
   getQuestDir,
   getQuestSlugArg,
   getValidationReportDriftIssues,
   printValidationReportDrift,
-  readJsonIfExists
+  readJsonIfExists,
+  readSupplementalContentJson,
+  structuredErrorMessages
 } from './script-utils.mjs'
 
 const args = process.argv.slice(2)
@@ -39,10 +42,23 @@ const expertReviews = JSON.parse(await readFile(reviewsPath, 'utf8')).map((revie
 const archivedReviews = (await readJsonIfExists(archivedReviewsPath) ?? []).map(
   (review) => validateArchivedContentExpertReview(review)
 )
+const supplementalContent = await readSupplementalContentJson(questDir)
+try {
+  assertSupplementalContentEvidence(
+    quest,
+    supplementalContent.worldJson,
+    supplementalContent.narrativeJson,
+    supplementalContent.assetManifestJson
+  )
+} catch (error) {
+  console.error(`${slug}: content evidence audit failed`)
+  for (const message of structuredErrorMessages(error)) {
+    console.error(`- ${message}`)
+  }
+  process.exit(1)
+}
 
-const currentContentHash = createContentHash(quest, {
-  omitTopLevelKeys: ['status']
-})
+const currentContentHash = getContentBundleHash(quest, supplementalContent)
 const validationIssues = validateCurrentValidationEvidence({
   quest,
   validationReport,
@@ -57,7 +73,11 @@ if (validationIssues.length > 0) {
   process.exit(1)
 }
 
-const driftIssues = getValidationReportDriftIssues(quest, validationReport)
+const driftIssues = getValidationReportDriftIssues(
+  quest,
+  validationReport,
+  supplementalContent
+)
 
 if (driftIssues.length > 0) {
   printValidationReportDrift(slug, driftIssues)
@@ -126,7 +146,7 @@ function validateCurrentValidationEvidence(input) {
   }
 
   if (input.validationReport.contentHash !== input.currentContentHash) {
-    issues.push('validation report content hash does not match quest content hash')
+    issues.push('validation report content hash does not match expected content hash')
   }
 
   return issues

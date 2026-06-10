@@ -183,8 +183,23 @@ describe('content refinement planning', () => {
         },
         revisionPacket: packet
       })
-    ).toThrow('Revision packet content hash does not match quest content hash.')
+    ).toThrow('Revision packet content hash does not match expected content hash.')
   })
+
+  it('accepts externally supplied bundle hashes for revision evidence', () => {
+    const bundleHash = 'sha256_bundle123'
+    const packet = createRevisionPacket({ contentHash: bundleHash })
+
+    const request = createContentRefinementRequest({
+      quest: testQuest,
+      revisionPacket: packet,
+      expectedContentHash: bundleHash,
+      now: () => '2026-06-09T00:00:00.000Z'
+    })
+
+    expect(request.plan.contentHash).toBe(bundleHash)
+  })
+
 
   it('rejects refinement results that try to bypass validation or review gates', () => {
     expect(() =>
@@ -570,6 +585,7 @@ function createRevisionPacket(input: {
   source?: ContentRevisionPacket['source']
   validationIssues?: ContentRevisionPacket['validation']['issues']
   expertFollowUps?: ContentRevisionPacket['expertFollowUps']
+  contentHash?: string
 } = {}): ContentRevisionPacket {
   const validationIssues = input.validationIssues ?? []
   const expertFollowUps = input.expertFollowUps ?? []
@@ -578,7 +594,7 @@ function createRevisionPacket(input: {
     id: 'revision_packet_test_quest_0_1_0',
     contentItemId: testQuest.id,
     contentVersion: testQuest.version,
-    contentHash: createQuestContentHash(testQuest),
+    contentHash: input.contentHash ?? createQuestContentHash(testQuest),
     generatedAt: '2026-06-09T00:00:00.000Z',
     source: input.source ?? 'none',
     questSummary: {

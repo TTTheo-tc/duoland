@@ -3,6 +3,7 @@ import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { validateSelQuestContent } from '@sel-quest/content-validation'
+import { createContentBundleHash } from '@sel-quest/content-authoring'
 import {
   assertAssetManifestReference,
   assertWorldAssetReferences,
@@ -86,9 +87,46 @@ export async function readJsonIfExists(filePath) {
   }
 }
 
-export function getValidationReportDriftIssues(quest, report) {
+export async function readSupplementalContentJson(questDir) {
+  return {
+    worldJson: await readJsonIfExists(path.join(questDir, 'world.json')),
+    narrativeJson: await readJsonIfExists(path.join(questDir, 'narrative.json')),
+    assetManifestJson: await readJsonIfExists(
+      path.join(questDir, 'asset-manifest.json')
+    )
+  }
+}
+
+export function getContentBundleHash(quest, supplementalContent = {}) {
+  const normalizedSupplementalContent =
+    normalizeSupplementalContentJson(supplementalContent)
+
+  return createContentBundleHash({
+    quest,
+    world: normalizedSupplementalContent.world,
+    narrative: normalizedSupplementalContent.narrative,
+    assetManifest: normalizedSupplementalContent.assetManifest
+  })
+}
+
+export function createContentBundleValidationReport(
+  quest,
+  supplementalContent = {},
+  options = {}
+) {
+  return validateSelQuestContent(quest, {
+    ...options,
+    contentHash: getContentBundleHash(quest, supplementalContent)
+  })
+}
+
+export function getValidationReportDriftIssues(
+  quest,
+  report,
+  supplementalContent = {}
+) {
   const expectedReport = normalizeJson(
-    validateSelQuestContent(quest, {
+    createContentBundleValidationReport(quest, supplementalContent, {
       now: () => report.createdAt,
       reportId: report.id
     })
@@ -152,8 +190,11 @@ export function assertSupplementalContentEvidence(
   narrativeJson,
   assetManifestJson
 ) {
-  const world = worldJson ? validateWorldDefinition(worldJson) : null
-  const narrative = narrativeJson ? validateNarrativeDefinition(narrativeJson) : null
+  const { world, narrative, assetManifest } = normalizeSupplementalContentJson({
+    worldJson,
+    narrativeJson,
+    assetManifestJson
+  })
 
   if (quest.worldBinding && !world) {
     throw new Error('quest declares worldBinding without world.json')
@@ -172,7 +213,6 @@ export function assertSupplementalContentEvidence(
   }
 
   if (world?.assetManifestId && assetManifestJson) {
-    const assetManifest = validateAssetManifest(assetManifestJson)
     assertAssetManifestReference(assetManifest, world.assetManifestId)
     assertWorldAssetReferences(world, assetManifest)
   }
@@ -196,6 +236,23 @@ export function assertSupplementalContentEvidence(
       world?.interactables.map((interactable) => interactable.id) ?? [],
     characterIds: world?.characters.map((character) => character.id) ?? []
   })
+}
+
+export function normalizeSupplementalContentJson(supplementalContent = {}) {
+  return {
+    world:
+      supplementalContent.worldJson != null
+        ? validateWorldDefinition(supplementalContent.worldJson)
+        : null,
+    narrative:
+      supplementalContent.narrativeJson != null
+        ? validateNarrativeDefinition(supplementalContent.narrativeJson)
+        : null,
+    assetManifest:
+      supplementalContent.assetManifestJson != null
+        ? validateAssetManifest(supplementalContent.assetManifestJson)
+        : null
+  }
 }
 
 export function structuredErrorMessages(error) {

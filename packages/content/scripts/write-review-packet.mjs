@@ -13,6 +13,7 @@ import {
 import {
   assertQuestDirectorySlug,
   assertSupplementalContentEvidence,
+  getContentBundleHash,
   getQuestDir,
   getQuestSlugArg,
   getValidationReportDriftIssues,
@@ -44,6 +45,7 @@ const reviewSurface = {
   usesWorldNarrative: Boolean(worldJson || narrativeJson),
   usesAssetRepresentation: Boolean(assetManifestJson)
 }
+const supplementalContent = { worldJson, narrativeJson, assetManifestJson }
 const quest = validateQuestDefinition(
   JSON.parse(await readFile(path.join(questDir, 'quest.json'), 'utf8'))
 )
@@ -70,11 +72,14 @@ try {
   process.exit(1)
 }
 
+const expectedContentHash = getContentBundleHash(quest, supplementalContent)
+
 const evidenceIssues = auditAuthoringEvidence({
   quest,
   validationReport,
   expertReviews,
-  reviewSurface
+  reviewSurface,
+  expectedContentHash
 })
 
 if (evidenceIssues.length > 0) {
@@ -85,7 +90,11 @@ if (evidenceIssues.length > 0) {
   process.exit(1)
 }
 
-const driftIssues = getValidationReportDriftIssues(quest, validationReport)
+const driftIssues = getValidationReportDriftIssues(
+  quest,
+  validationReport,
+  supplementalContent
+)
 
 if (driftIssues.length > 0) {
   printValidationReportDrift(slug, driftIssues)

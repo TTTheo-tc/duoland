@@ -371,7 +371,7 @@ export function getContentPublishabilityReasons(
     options.expectedContentHash &&
     report.contentHash !== options.expectedContentHash
   ) {
-    reasons.push('validation report content hash does not match quest content hash')
+    reasons.push('validation report content hash does not match expected content hash')
   }
 
   if (report.status !== 'passed') {
@@ -433,7 +433,7 @@ export function getExpertReviewPublishabilityReasons(input: {
     for (const review of versionMatchedReviews) {
       if (review.contentHash !== input.expectedContentHash) {
         reasons.push(
-          `expert review ${review.id} content hash does not match quest content hash`
+          `expert review ${review.id} content hash does not match expected content hash`
         )
       }
     }

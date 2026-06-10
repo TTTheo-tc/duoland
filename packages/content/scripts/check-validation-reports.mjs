@@ -4,10 +4,13 @@ import { validateQuestDefinition } from '@sel-quest/quest-core'
 import { validateContentValidationReport } from '@sel-quest/review-core'
 import {
   assertQuestDirectorySlug,
+  assertSupplementalContentEvidence,
   getBlockingIssueCount,
   getRequestedQuestDirs,
   getValidationReportDriftIssues,
-  printValidationReportDrift
+  printValidationReportDrift,
+  readSupplementalContentJson,
+  structuredErrorMessages
 } from './script-utils.mjs'
 
 const requestedSlugs = process.argv.slice(2)
@@ -23,8 +26,29 @@ for (const { slug, questDir } of questDirs) {
   const report = validateContentValidationReport(
     JSON.parse(await readFile(reportPath, 'utf8'))
   )
+  const supplementalContent = await readSupplementalContentJson(questDir)
 
-  const driftIssues = getValidationReportDriftIssues(quest, report)
+  try {
+    assertSupplementalContentEvidence(
+      quest,
+      supplementalContent.worldJson,
+      supplementalContent.narrativeJson,
+      supplementalContent.assetManifestJson
+    )
+  } catch (error) {
+    hasFailure = true
+    console.error(`${slug}: content evidence audit failed`)
+    for (const message of structuredErrorMessages(error)) {
+      console.error(`- ${message}`)
+    }
+    continue
+  }
+
+  const driftIssues = getValidationReportDriftIssues(
+    quest,
+    report,
+    supplementalContent
+  )
 
   if (driftIssues.length === 0) {
     console.log(`${slug}: validation report up to date`)
