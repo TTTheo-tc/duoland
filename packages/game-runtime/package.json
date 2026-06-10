@@ -9,6 +9,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@sel-quest/narrative-core": "0.1.0",
+    "@sel-quest/world-core": "0.1.0",
     "zod": "^3.25.42"
   }
 }

@@ -343,6 +343,26 @@ describe('world-core', () => {
       }
     })
 
+    expect(
+      validateWorldRendererToRuntimeEvent({
+        type: 'WORLD_DIALOGUE_COMPLETED',
+        dialogueId: 'dialogue_xiaoyu_intro'
+      })
+    ).toEqual({
+      type: 'WORLD_DIALOGUE_COMPLETED',
+      dialogueId: 'dialogue_xiaoyu_intro'
+    })
+
+    expect(
+      validateWorldRendererToRuntimeEvent({
+        type: 'WORLD_SCENE_TRANSITION_COMPLETED',
+        sceneId: 'art_room'
+      })
+    ).toEqual({
+      type: 'WORLD_SCENE_TRANSITION_COMPLETED',
+      sceneId: 'art_room'
+    })
+
     expect(() =>
       validateWorldRendererToRuntimeEvent({
         type: 'INTERACTABLE_CLICKED',
@@ -418,5 +438,36 @@ describe('world-core', () => {
         }
       })
     ).toThrow('not in active scene')
+  })
+
+  it('applies renderer-confirmed scene transitions to world state', () => {
+    const initialState = createInitialWorldState(world, {
+      entrySceneId: 'art_room'
+    })
+
+    expect(
+      interpretWorldRendererEvent({
+        world,
+        state: initialState,
+        event: {
+          type: 'WORLD_SCENE_TRANSITION_COMPLETED',
+          sceneId: 'art_room'
+        }
+      }).state
+    ).toMatchObject({
+      activeSceneId: 'art_room',
+      visitedSceneIds: ['art_room']
+    })
+
+    expect(() =>
+      interpretWorldRendererEvent({
+        world,
+        state: initialState,
+        event: {
+          type: 'WORLD_SCENE_TRANSITION_COMPLETED',
+          sceneId: 'missing_scene'
+        }
+      })
+    ).toThrow('World scene does not exist')
   })
 })

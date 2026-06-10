@@ -53,6 +53,17 @@ export function interpretWorldRendererEvent({
     return interpretWorldInteractable(world, state, event.interactableId)
   }
 
+  if (event.type === 'WORLD_SCENE_TRANSITION_COMPLETED') {
+    if (!world.scenes.some((scene) => scene.id === event.sceneId)) {
+      throw new Error(`World scene does not exist: ${event.sceneId}`)
+    }
+
+    return {
+      state: transitionWorldScene(state, event.sceneId),
+      intents: []
+    }
+  }
+
   return { state, intents: [] }
 }
 

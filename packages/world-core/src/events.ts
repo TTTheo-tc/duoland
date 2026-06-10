@@ -30,6 +30,16 @@ export interface WorldActivityCompletedEvent {
   payload?: Record<string, unknown>
 }
 
+export interface WorldDialogueCompletedEvent {
+  type: 'WORLD_DIALOGUE_COMPLETED'
+  dialogueId: string
+}
+
+export interface WorldSceneTransitionCompletedEvent {
+  type: 'WORLD_SCENE_TRANSITION_COMPLETED'
+  sceneId: string
+}
+
 export type WorldRuntimeToRendererEvent = WorldRuntimeStateChangedEvent
 
 export type WorldRendererToRuntimeEvent =
@@ -37,6 +47,8 @@ export type WorldRendererToRuntimeEvent =
   | WorldObjectObservedEvent
   | WorldCutsceneCompletedEvent
   | WorldActivityCompletedEvent
+  | WorldDialogueCompletedEvent
+  | WorldSceneTransitionCompletedEvent
 
 export function validateWorldRuntimeToRendererEvent(
   input: unknown
