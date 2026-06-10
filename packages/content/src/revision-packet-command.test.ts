@@ -137,7 +137,7 @@ describe('content revision packet command', () => {
     const result = await runRevisionPacket(questsRoot)
 
     expect(result.exitCode).not.toBe(0)
-    expect(result.stderr).toContain('validation_report_hash_mismatch')
+    expect(result.stderr).toContain('validation report is out of date')
   })
 })
 

@@ -96,9 +96,7 @@ describe('content archive stale reviews command', () => {
     const expertReviews = await readExpertReviews(questsRoot)
 
     expect(result.exitCode).not.toBe(0)
-    expect(result.stderr).toContain(
-      'validation report content hash does not match expected content hash'
-    )
+    expect(result.stderr).toContain('validation report is out of date')
     expect(expertReviews).toEqual([oldReview])
   })
 })

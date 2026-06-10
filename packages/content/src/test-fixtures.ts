@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 import { validateSelQuestContent } from '@sel-quest/content-validation'
 import { createContentBundleHash } from '@sel-quest/content-authoring'
+import { createContentBundleValidationReport } from '../scripts/script-utils.mjs'
 import type { QuestDefinition } from '@sel-quest/quest-core'
 import type {
   ContentExpertReview,
@@ -268,17 +269,18 @@ export async function writeQuestFixture(input: {
   const questsRoot = await mkdtemp(path.join(os.tmpdir(), 'sel-quest-content-'))
   const questDir = path.join(questsRoot, input.quest.slug)
   const validationQuest = input.validationQuest ?? input.quest
-  const validationContentHash = createContentBundleHash({
-    quest: validationQuest,
-    world: input.world,
-    narrative: input.narrative,
-    assetManifest: input.assetManifest
-  })
-  const validationReport = validateSelQuestContent(validationQuest, {
-    now: () => '2026-06-09T00:00:00.000Z',
-    reportId: `report_${validationQuest.id}_${validationQuest.version}_rules`,
-    contentHash: validationContentHash
-  })
+  const validationReport = createContentBundleValidationReport(
+    validationQuest,
+    {
+      worldJson: input.world,
+      narrativeJson: input.narrative,
+      assetManifestJson: input.assetManifest
+    },
+    {
+      now: () => '2026-06-09T00:00:00.000Z',
+      reportId: `report_${validationQuest.id}_${validationQuest.version}_rules`
+    }
+  )
 
   await mkdir(questDir, { recursive: true })
   await writeFile(

@@ -82,6 +82,38 @@ describe('content check validation command', () => {
     expect(result.stdout).toContain('test-quest: validation report up to date')
   })
 
+  it('fails when the supplemental validator run is missing', async () => {
+    const { questsRoot, validationReport } = await writeQuestFixture({
+      quest: validQuest,
+      world: validWorld,
+      assetManifest: validAssetManifest
+    })
+    const reportPath = path.join(
+      questsRoot,
+      'test-quest',
+      'validation-report.json'
+    )
+    await writeFile(
+      reportPath,
+      `${JSON.stringify(
+        {
+          ...validationReport,
+          validators: validationReport.validators.filter(
+            (validator) =>
+              validator.validatorId !== 'rule.supplemental_content_evidence'
+          )
+        },
+        null,
+        2
+      )}\n`
+    )
+
+    const result = await runCheckValidation(questsRoot, ['test-quest'])
+
+    expect(result.exitCode).toBe(1)
+    expect(result.stderr).toContain('test-quest: validation report is out of date')
+  })
+
   it('fails without rewriting stale validation reports', async () => {
     const { questsRoot, validationReport } = await writeQuestFixture({
       quest: validQuest
@@ -131,7 +163,7 @@ describe('content check validation command', () => {
     expect(result.stderr).toContain('test-quest: validation report is out of date')
   })
 
-  it('returns structured evidence errors for malformed supplemental content', async () => {
+  it('fails when malformed supplemental content makes validation stale', async () => {
     const { questsRoot } = await writeQuestFixture({
       quest: validQuest,
       world: validWorld,
@@ -145,8 +177,7 @@ describe('content check validation command', () => {
     const result = await runCheckValidation(questsRoot, ['test-quest'])
 
     expect(result.exitCode).toBe(1)
-    expect(result.stderr).toContain('test-quest: content evidence audit failed')
-    expect(result.stderr).toContain('schema')
+    expect(result.stderr).toContain('test-quest: validation report is out of date')
   })
 
   it('returns nonzero for up-to-date reports with blocking issues', async () => {

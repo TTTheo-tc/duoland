@@ -111,7 +111,7 @@ describe('content status command', () => {
     ])
   })
 
-  it('surfaces supplemental content evidence issues', async () => {
+  it('surfaces supplemental content issues through validation status', async () => {
     const narrativeQuest = {
       ...validQuest,
       episodeIds: ['episode_test']
@@ -148,21 +148,25 @@ describe('content status command', () => {
       narrative: invalidNarrative
     })
 
+    const validateResult = await runContentScript({
+      scriptName: 'write-validation-reports.mjs',
+      args: ['test-quest'],
+      questsRoot
+    })
     const result = await runStatus(questsRoot)
     const [status] = JSON.parse(result.stdout)
 
+    expect(validateResult.exitCode).toBe(1)
     expect(result.exitCode).toBe(0)
-    expect(status.authoringState).toBe('auto_validation_failed')
+    expect(status.authoringState).toBe('needs_ai_refinement')
+    expect(status.validationStatus).toBe('needs_major_revision')
     expect(status.publishabilityReasons).toContain(
-      'supplemental content evidence is invalid'
+      'validation status is needs_major_revision'
     )
-    expect(status.evidenceIssues).toEqual([
-      {
-        severity: 'error',
-        code: 'supplemental_content_evidence_invalid',
-        message: 'error: unknown_beat_activity_id at episodes.episode_test.beats.beat_missing_activity'
-      }
-    ])
+    expect(status.publishabilityReasons).toContain(
+      'validation report contains blocking issues'
+    )
+    expect(status.evidenceIssues).toEqual([])
   })
 
   it('rejects path-like quest slugs', async () => {

@@ -11,12 +11,10 @@ import {
 } from '@sel-quest/review-core'
 import {
   assertQuestDirectorySlug,
-  assertSupplementalContentEvidence,
   getContentBundleHash,
   getRequestedQuestDirs,
   getValidationReportDriftIssues,
-  readJsonIfExists,
-  structuredErrorMessages
+  readJsonIfExists
 } from './script-utils.mjs'
 
 const args = process.argv.slice(2)
@@ -75,16 +73,7 @@ async function readAuthoringStatus(slug, questDir) {
     usesAssetRepresentation: Boolean(assetManifestJson)
   }
   const supplementalContent = { worldJson, narrativeJson, assetManifestJson }
-  const supplementalEvidenceIssues = getSupplementalEvidenceIssues({
-    quest,
-    worldJson,
-    narrativeJson,
-    assetManifestJson
-  })
-  const expectedContentHash =
-    supplementalEvidenceIssues.length === 0
-      ? getContentBundleHash(quest, supplementalContent)
-      : validationReport?.contentHash
+  const expectedContentHash = getContentBundleHash(quest, supplementalContent)
   const snapshot = createAuthoringSnapshot({
     quest,
     validationReport,
@@ -100,13 +89,7 @@ async function readAuthoringStatus(slug, questDir) {
     expectedContentHash
   })
   const validationDriftIssues = validationReport
-    ? supplementalEvidenceIssues.length === 0
-      ? getValidationReportDriftIssues(
-          quest,
-          validationReport,
-          supplementalContent
-        )
-      : []
+    ? getValidationReportDriftIssues(quest, validationReport, supplementalContent)
     : []
 
   return {
@@ -116,47 +99,18 @@ async function readAuthoringStatus(slug, questDir) {
     contentHash: snapshot.contentHash,
     questStatus: quest.status,
     authoringState:
-      supplementalEvidenceIssues.length > 0
-        ? 'auto_validation_failed'
-        : snapshot.state,
+      validationDriftIssues.length > 0 ? 'auto_validation_failed' : snapshot.state,
     validationStatus: validationReport?.status ?? null,
     safetyDecision: validationReport?.summary.safetyDecision ?? null,
     expertReviewCount: expertReviews.length,
-    publishabilityReasons:
-      supplementalEvidenceIssues.length > 0
-        ? [
-            ...snapshot.publishabilityReasons,
-            'supplemental content evidence is invalid'
-          ]
-        : snapshot.publishabilityReasons,
+    publishabilityReasons: snapshot.publishabilityReasons,
     validationDriftIssues,
-    evidenceIssues: [
-      ...evidenceIssues.map((issue) => ({
+    evidenceIssues: evidenceIssues.map((issue) => ({
         severity: issue.severity,
         code: issue.code,
         message: issue.message,
         evidenceId: issue.evidenceId
-      })),
-      ...supplementalEvidenceIssues
-    ]
-  }
-}
-
-function getSupplementalEvidenceIssues(input) {
-  try {
-    assertSupplementalContentEvidence(
-      input.quest,
-      input.worldJson,
-      input.narrativeJson,
-      input.assetManifestJson
-    )
-    return []
-  } catch (error) {
-    return structuredErrorMessages(error).map((message) => ({
-      severity: 'error',
-      code: 'supplemental_content_evidence_invalid',
-      message
-    }))
+      }))
   }
 }
 
