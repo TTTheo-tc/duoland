@@ -14,5 +14,5 @@ export default async function PreviewQuestPage({
 
   if (!quest) notFound()
 
-  return <QuestPlayer quest={quest} />
+  return <QuestPlayer quest={quest} mode="preview" />
 }
