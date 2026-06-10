@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   assertNarrativeReferences,
   completeNarrativeBeat,
+  completeAndAdvanceNarrativeBeat,
   createInitialNarrativeState,
+  getNarrativeBeatIntents,
   setNarrativeFlag,
   transitionNarrativeBeat,
   validateNarrativeDefinition,
@@ -361,5 +363,198 @@ describe('narrative-core', () => {
         beatId: 'beat_opening_dialogue'
       })
     ).toThrow()
+  })
+
+  it('creates runtime intents for the current narrative beat', () => {
+    const state = createInitialNarrativeState(narrative)
+    const beat = narrative.episodes[0].beats.find(
+      (candidate) => candidate.id === state.currentBeatId
+    )
+
+    expect(beat).toBeDefined()
+    if (!beat) throw new Error('Expected opening beat to exist.')
+    expect(getNarrativeBeatIntents(beat)).toEqual([
+      {
+        type: 'start_dialogue',
+        dialogueId: 'dialogue_xiaoyu_intro',
+        beatId: 'beat_opening_dialogue'
+      }
+    ])
+  })
+
+  it('completes a beat and advances to the next narrative intent', () => {
+    const state = createInitialNarrativeState(narrative)
+    const result = completeAndAdvanceNarrativeBeat(narrative, state)
+
+    expect(result.state).toMatchObject({
+      currentBeatId: 'beat_emotion_choice',
+      completedBeatIds: ['beat_opening_dialogue']
+    })
+    expect(result.events).toEqual([
+      {
+        type: 'NARRATIVE_BEAT_COMPLETED',
+        episodeId: 'episode_xiaoyu_drawing',
+        beatId: 'beat_opening_dialogue'
+      },
+      {
+        type: 'NARRATIVE_BEAT_ENTERED',
+        episodeId: 'episode_xiaoyu_drawing',
+        beatId: 'beat_emotion_choice'
+      },
+      {
+        type: 'NARRATIVE_STATE_CHANGED',
+        state: result.state
+      }
+    ])
+    expect(result.intents).toEqual([
+      {
+        type: 'start_activity',
+        activityId: 'emotion_choice_001',
+        beatId: 'beat_emotion_choice'
+      }
+    ])
+  })
+
+  it('completes terminal beats without advancing', () => {
+    const state = createInitialNarrativeState(narrative, {
+      beatId: 'beat_emotion_choice'
+    })
+    const result = completeAndAdvanceNarrativeBeat(narrative, state)
+
+    expect(result.state).toMatchObject({
+      currentBeatId: 'beat_emotion_choice',
+      completedBeatIds: ['beat_emotion_choice']
+    })
+    expect(result.intents).toEqual([])
+    expect(result.events).toEqual([
+      {
+        type: 'NARRATIVE_BEAT_COMPLETED',
+        episodeId: 'episode_xiaoyu_drawing',
+        beatId: 'beat_emotion_choice'
+      },
+      {
+        type: 'NARRATIVE_STATE_CHANGED',
+        state: result.state
+      }
+    ])
+  })
+
+  it('orders current exit action intents before next beat enter and primary intents', () => {
+    const actionNarrative: NarrativeDefinition = {
+      ...narrative,
+      episodes: [
+        {
+          ...narrative.episodes[0],
+          beats: [
+            {
+              ...narrative.episodes[0].beats[0],
+              exitActions: [
+                {
+                  type: 'set_world_flag',
+                  flag: 'finished_opening_dialogue',
+                  value: true
+                }
+              ]
+            },
+            {
+              ...narrative.episodes[0].beats[1],
+              enterActions: [
+                {
+                  type: 'show_notice',
+                  noticeId: 'emotion_choice_ready'
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+    const state = createInitialNarrativeState(actionNarrative)
+    const result = completeAndAdvanceNarrativeBeat(actionNarrative, state)
+
+    expect(result.intents).toEqual([
+      {
+        type: 'set_world_flag',
+        flag: 'finished_opening_dialogue',
+        value: true,
+        beatId: 'beat_opening_dialogue'
+      },
+      {
+        type: 'show_notice',
+        noticeId: 'emotion_choice_ready',
+        beatId: 'beat_emotion_choice'
+      },
+      {
+        type: 'start_activity',
+        activityId: 'emotion_choice_001',
+        beatId: 'beat_emotion_choice'
+      }
+    ])
+  })
+
+  it('resolves narrative branch rules from world flags and activity completion', () => {
+    const branchedNarrative: NarrativeDefinition = {
+      ...narrative,
+      episodes: [
+        {
+          ...narrative.episodes[0],
+          beats: [
+            {
+              ...narrative.episodes[0].beats[0],
+              next: [
+                {
+                  type: 'world_flag',
+                  flag: 'observed_crumpled_drawing',
+                  equals: true,
+                  nextBeatId: 'beat_emotion_choice'
+                },
+                {
+                  type: 'activity_completed',
+                  activityId: 'emotion_choice_001',
+                  nextBeatId: 'beat_recap'
+                },
+                {
+                  type: 'default',
+                  nextBeatId: 'beat_observe_drawing'
+                }
+              ]
+            },
+            {
+              id: 'beat_observe_drawing',
+              kind: 'world_interaction',
+              sceneId: 'art_room',
+              interactableId: 'xiaoyu_npc',
+              learningObjectiveIds: ['lo_emotion_recognition']
+            },
+            narrative.episodes[0].beats[1],
+            {
+              id: 'beat_recap',
+              kind: 'recap',
+              sceneId: 'art_room',
+              activityId: 'emotion_choice_001',
+              learningObjectiveIds: ['lo_emotion_recognition']
+            }
+          ]
+        }
+      ]
+    }
+    const state = createInitialNarrativeState(branchedNarrative)
+
+    expect(
+      completeAndAdvanceNarrativeBeat(branchedNarrative, state).state
+        .currentBeatId
+    ).toBe('beat_observe_drawing')
+
+    expect(
+      completeAndAdvanceNarrativeBeat(branchedNarrative, state, {
+        worldFlags: { observed_crumpled_drawing: true }
+      }).state.currentBeatId
+    ).toBe('beat_emotion_choice')
+
+    expect(
+      completeAndAdvanceNarrativeBeat(branchedNarrative, state, {
+        completedActivityIds: ['emotion_choice_001']
+      }).state.currentBeatId
+    ).toBe('beat_recap')
   })
 })
