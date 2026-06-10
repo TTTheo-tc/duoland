@@ -122,6 +122,41 @@ describe('review-core', () => {
     expect(validateContentValidationReport(baseReport)).toEqual(baseReport)
   })
 
+  it('accepts world, narrative, and asset issue locations', () => {
+    const report: ContentValidationReport = {
+      ...baseReport,
+      issues: [
+        {
+          id: 'issue_world_narrative_001',
+          severity: 'major',
+          type: 'ambiguous_scenario',
+          location: {
+            questId: 'emotion-detective',
+            worldId: 'emotion-town',
+            zoneId: 'emotion_harbor',
+            sceneId: 'art_room',
+            characterId: 'xiaoyu',
+            interactableId: 'crumpled_drawing',
+            narrativeId: 'emotion-detective-narrative',
+            episodeId: 'episode_xiaoyu_drawing',
+            beatId: 'beat_observe_drawing',
+            dialogueId: 'dialogue_xiaoyu_intro',
+            cutsceneId: 'cutscene_xiaoyu_intro',
+            assetId: 'model_xiaoyu_placeholder',
+            fieldPath: 'narrative.episodes.0.beats.2'
+          },
+          explanation:
+            'World and narrative validation can point reviewers to a precise surface.',
+          blocksPublishing: true
+        }
+      ]
+    }
+
+    expect(validateContentValidationReport(report).issues[0].location).toEqual(
+      report.issues[0].location
+    )
+  })
+
   it('marks a clean passed report as publishable', () => {
     expect(isContentReportPublishable(baseReport)).toBe(true)
     expect(() => assertContentReportPublishable(baseReport)).not.toThrow()
