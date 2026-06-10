@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+export * from './world-narrative.ts'
+
 const RendererFlagValueSchema = z.union([z.boolean(), z.string(), z.number()])
 
 export const RendererPublicQuestStateSchema = z.object({

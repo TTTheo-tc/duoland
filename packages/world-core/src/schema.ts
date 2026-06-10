@@ -212,9 +212,21 @@ export const WorldActivityCompletedEventSchema = z.object({
   payload: z.record(z.unknown()).optional()
 })
 
+export const WorldDialogueCompletedEventSchema = z.object({
+  type: z.literal('WORLD_DIALOGUE_COMPLETED'),
+  dialogueId: z.string().min(1)
+})
+
+export const WorldSceneTransitionCompletedEventSchema = z.object({
+  type: z.literal('WORLD_SCENE_TRANSITION_COMPLETED'),
+  sceneId: z.string().min(1)
+})
+
 export const WorldRendererToRuntimeEventSchema = z.discriminatedUnion('type', [
   WorldInteractableClickedEventSchema,
   WorldObjectObservedEventSchema,
   WorldCutsceneCompletedEventSchema,
-  WorldActivityCompletedEventSchema
+  WorldActivityCompletedEventSchema,
+  WorldDialogueCompletedEventSchema,
+  WorldSceneTransitionCompletedEventSchema
 ])
