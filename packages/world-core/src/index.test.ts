@@ -3,6 +3,7 @@ import {
   assertWorldBindingReference,
   completeWorldInteractable,
   createInitialWorldState,
+  interpretWorldRendererEvent,
   setWorldFlag,
   transitionWorldScene,
   validateWorldRendererToRuntimeEvent,
@@ -355,5 +356,67 @@ describe('world-core', () => {
         interactableId: 'xiaoyu_npc'
       })
     ).toThrow()
+  })
+
+  it('interprets world interaction actions into state updates and runtime intents', () => {
+    const initialState = createInitialWorldState(world, {
+      entrySceneId: 'art_room'
+    })
+
+    const clueResult = interpretWorldRendererEvent({
+      world,
+      state: initialState,
+      event: {
+        type: 'INTERACTABLE_CLICKED',
+        interactableId: 'crumpled_drawing'
+      }
+    })
+
+    expect(clueResult.state.flags.observed_crumpled_drawing).toBe(true)
+    expect(clueResult.state.completedInteractableIds).toEqual([
+      'crumpled_drawing'
+    ])
+    expect(clueResult.intents).toEqual([])
+
+    const npcResult = interpretWorldRendererEvent({
+      world,
+      state: clueResult.state,
+      event: {
+        type: 'WORLD_OBJECT_OBSERVED',
+        interactableId: 'xiaoyu_npc'
+      }
+    })
+
+    expect(npcResult.state.completedInteractableIds).toEqual([
+      'crumpled_drawing',
+      'xiaoyu_npc'
+    ])
+    expect(npcResult.intents).toEqual([
+      {
+        type: 'start_dialogue',
+        dialogueId: 'dialogue_xiaoyu_intro',
+        sourceInteractableId: 'xiaoyu_npc'
+      }
+    ])
+  })
+
+  it('rejects interactions outside the active world scene', () => {
+    const initialState = {
+      ...createInitialWorldState(world, {
+        entrySceneId: 'art_room'
+      }),
+      activeSceneId: 'other_scene'
+    }
+
+    expect(() =>
+      interpretWorldRendererEvent({
+        world,
+        state: initialState,
+        event: {
+          type: 'INTERACTABLE_CLICKED',
+          interactableId: 'crumpled_drawing'
+        }
+      })
+    ).toThrow('not in active scene')
   })
 })
